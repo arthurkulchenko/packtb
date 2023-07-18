@@ -2,3 +2,4 @@
 .env
 tmp
 */target/debug
+*/target/doc
