@@ -3,5 +3,21 @@
 version = 3
 
 [[package]]
+name = "lazy_static"
+version = "1.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e2abad23fbc42b3700f2f279844dc832adb2b2eb069b2df918f455c4e18cc646"
+
+[[package]]
 name = "radish_sync"
 version = "0.1.0"
+dependencies = [
+ "lazy_static",
+ "resp",
+]
+
+[[package]]
+name = "resp"
+version = "1.0.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3d276d153c2c18b622527a9118d8055e4e26530f15d616d6290b00acc7e2f6aa"
