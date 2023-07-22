@@ -5,7 +5,7 @@ use std::env;
 use std::io::{Read, Write, BufReader};
 use std::net::{TcpListener, TcpStream};
 use std::sync::Mutex;
-// use std::thread;
+use std::thread;
 
 mod commands;
 use crate::commands::handle_client_request;
@@ -23,7 +23,7 @@ fn main() {
     for stream in listener.incoming() {
         let stream = stream.unwrap();
         println!("Connection from {:?}", stream);
-        handle_client(stream);
+        thread::spawn(|| handle_client(stream));
     }
 }
 
