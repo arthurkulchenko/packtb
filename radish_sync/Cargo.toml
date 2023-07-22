@@ -7,4 +7,4 @@ edition = "2021"
 
 [dependencies]
 lazy_static = "1.4.0"
-resp = { git = "https://github.com/creativecoder/resp" }
+resp = "1.0.3"

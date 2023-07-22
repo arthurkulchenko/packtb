@@ -1,19 +1,18 @@
-use lasy_static::lazy_static;
+use lazy_static::lazy_static;
 use resp::Decoder;
 use std::collections::HashMap;
 use std::env;
-use std::io::{BufReader, Write};
-use std::net::Shutdown;
+use std::io::{Read, Write, BufReader};
 use std::net::{TcpListener, TcpStream};
 use std::sync::Mutex;
 use std::thread;
 
 mod commands;
-use crate::commands::process_client_request;
+use crate::commands::handle_client_request;
 
 type STORE = Mutex<HashMap<String, String>>;
 
-lasy_static! {
+lazy_static! {
     static ref RADISH_DB: STORE = Mutex::new(HashMap::new());
 }
 
@@ -22,23 +21,26 @@ fn main() {
     let listener = TcpListener::bind(&addr).unwrap();
     println!("RADISH sync listening on {}", addr);
     for stream in listener.incoming() {
-        let stream = strwam.unwrap();
+        let stream = stream.unwrap();
         println!("Connection from {:?}", stream);
-        handle_client(stream);
+        thread::spawn(|| handle_client(stream));
     }
 }
 
-fn handle_client(stream: TcpStream) {
-    let mut stream = BufReader::new(stream);
-    let decoder = Decoder::new(&mut stream).decode();
+fn handle_client(mut stream: TcpStream) {
+    let mut buffer = vec![0; 512];
+    stream.read(&mut buffer).unwrap();
+
+    let reader = BufReader::new(&*buffer);
+    let decoder = Decoder::new(reader).decode();
     match decoder {
         Ok(v) => {
-            let reply = process_client_request(v);
-            stream.get_mut().write_all(&reply).unwrap();
+            let reply = handle_client_request(v);
+            stream.write_all(&reply).unwrap();
         }
         Err(e) => {
             println!("Error: Invalid command: {:?}", e);
-            let _ = stream.get_mut().shutdown(Shutdown::Both);
+            let _ = stream.shutdown(std::net::Shutdown::Both);
         }
     };
 }
