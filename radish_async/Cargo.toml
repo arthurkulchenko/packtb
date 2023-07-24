@@ -1,0 +1,15 @@
+[package]
+name = "radish_async"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+tokio = { version = "1.29.1", features = ["full"] }
+lazy_static = "1.4.0"
+resp = "1.0.3"
+tokio-codec = "0.1.2"
+# tokio-util = { version = "0.6", features = ["codec"] }
+bytes = "0.4.12"
+# bytes = "1.0.1"
