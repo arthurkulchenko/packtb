@@ -3,8 +3,7 @@
 // use std::collections::HashMap;
 // use std::sync::{Arc};
 // use std::str;
-// use hyper::Request;
-// use hyper::{Body, Response};
+// use hyper::{Body, Error, Request, Response};
 // // use hyper::rt::{Fututre};
 // use futures::future::FutureExt;
 
@@ -12,7 +11,7 @@
 // use crate::shortener::shorten_url;
 
 // type UrlDb = Arc<RwLock<HashMap<String, String>>>;
-// type BoxFut = Box<dyn Future<Item = Response<Body>, Error = hyper::Error> + Send>;
+// // type BoxFut = Box<dyn Output = Response<Body>, hyper::Error> + Send;
 
 // lazy_static! { static ref SHORT_URLS: UrlDb = Arc::new(RwLock::new(HashMap::new())); }
 
