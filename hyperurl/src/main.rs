@@ -30,7 +30,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     pretty_env_logger::init();
 
     // let addr = SocketAddr::from(([127, 0, 0, 1], 3002));
-    let addr = "127.0.0.1:3000".parse().unwrap();
+    let addr = "127.0.0.1:3001".parse().unwrap();
     // let server = Server::bind(&addr).serv(|| service_fn(url_service)).map_err(|e| error!("server error: {}", e));
     // let addr = SocketAddr::from(([127, 0, 0, 1], 3000));
     // We create a TcpListener and bind it to 127.0.0.1:3000
