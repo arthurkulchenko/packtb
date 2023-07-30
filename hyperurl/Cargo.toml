@@ -10,9 +10,15 @@ edition = "2021"
 hyper = { version = "0.14", features = ["full"] }
 tokio = { version = "1", features = ["full"] }
 http-body-util = "0.1.0-rc.2"
+
 serde_json = "1.0.64"
 futures = "0.3"
 lazy_static = "1.4.0"
 rust-crypto = "0.2.36"
 log = "0.4.14"
 pretty_env_logger = "0.4.0"
+
+hyper = { version = "0.14", features = ["full"] }
+tokio = { version = "1", features = ["full"] }
+http-body-util = "0.1.0-rc.3"
+hyper-util = { git = "https://github.com/hyperium/hyper-util.git" }
