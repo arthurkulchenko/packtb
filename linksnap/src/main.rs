@@ -41,9 +41,7 @@ fn main() {
                                       .route("/links", http::Method::GET, links)
                                       .route("/add", http::Method::POST, add_link)
                                       .route("/rm", http::Method::DELETE, rm_link)
-    }
-
-
+    };
     server::new(web_app).bind("127.0.0.1:8080").unwrap().start();
     let _ = system.run();
 }
