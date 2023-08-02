@@ -44,7 +44,7 @@ fn main() {
                             println!("{}: {:?}", addr, msg);
                             // Send to message to sink.
                             sink.send(msg).expect("Failed to send message to sink");
-                            // QUESTION: Doesn't we need to break the loop here?
+                            // QUESTION: Don't we need to break the loop here?
                         },
                         // Handles errors
                         Err(ref err) if err.kind() == ErrorKind::WouldBlock => (),
