@@ -104,4 +104,19 @@ impl Snake {
       let block = self.tail.clone().unwrap();
       self.body.push_back(block);
   }
+
+  pub fn overlap_tail(&self, x: i32, y: i32) -> bool {
+      let mut c = 0;
+      for block in &self.body {
+          if x == block.x && y == block.y {
+              return true;
+          }
+
+          c += 1;
+          if c == self.body.len() - 1 {
+              break;
+          }
+      }
+      return false;
+  }
 }
