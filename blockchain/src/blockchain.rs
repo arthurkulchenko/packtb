@@ -45,8 +45,8 @@ impl Chain {
             difficulty,
             miner_addr,
             reward: 100.0,
-        }
-        chian.generate_new_block();
+        };
+        chain.generate_new_block();
         chain
     }
 
@@ -63,11 +63,11 @@ impl Chain {
         block.transactions.push(reward_trans);
         block.transactions.append(&mut self.current_transaction);
         block.count = block.transactions.len() as u32;
-        block.merkle = Chain::get_merkle(block.transactions.clone());
+        block.header.merkle = Chain::get_merkle(block.transactions.clone());
         Chain::proof_of_work(&mut block.header);
 
-        println("{:#?}", &block);
-        self.chian.push(block);
+        println!("{:#?}", &block);
+        self.chain.push(block);
         true
     }
 
@@ -79,12 +79,12 @@ impl Chain {
     pub fn last_hash(&self) -> String {
         let block = match self.chain.last() {
             Some(block) => block,
-            None => String::from_utf8(vec![48; 64]).unwrap()
+            None => return String::from_utf8(vec![48; 64]).unwrap()
         };
         Chain::hash(&block.header)
     }
 
-    pub fn update_difficultiy(&mut self, difficulty: u32) -> bool {
+    pub fn update_difficulty(&mut self, difficulty: u32) -> bool {
         self.difficulty = difficulty;
         true
     }
@@ -97,7 +97,7 @@ impl Chain {
     fn get_merkle(current_transaction: Vec<Transaction>) -> String {
         let mut merkle = Vec::new();
         for t in &current_transaction {
-            let hash = Chain::hash(t);
+            let hash = Chain::hash(&t);
             merkle.push(hash);
         }
         if merkle.len() % 2 == 1 {
@@ -135,11 +135,11 @@ impl Chain {
         }
     }
 
-    pub fn hash<T: serd::Serialize>(item &T) -> String {
+    pub fn hash<T: serde::Serialize>(item: &T) -> String {
         let input = serde_json::to_string(&item).unwrap();
         let mut hasher = Sha256::default();
-        hasher.input(input.as_bytes());
-        let res = hasher.result();
+        hasher.update(input.as_bytes());
+        let res = hasher.finalize();
         let vec_res = res.to_vec();
         Chain::hex_to_string(vec_res.as_slice())
     }
