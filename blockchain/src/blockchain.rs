@@ -75,4 +75,80 @@ impl Chain {
         self.current_transaction.push(Transaction { sender, receiver, amount, });
         true
     }
+
+    pub fn last_hash(&self) -> String {
+        let block = match self.chain.last() {
+            Some(block) => block,
+            None => String::from_utf8(vec![48; 64]).unwrap()
+        };
+        Chain::hash(&block.header)
+    }
+
+    pub fn update_difficultiy(&mut self, difficulty: u32) -> bool {
+        self.difficulty = difficulty;
+        true
+    }
+
+    pub fn update_reward(&mut self, reward: f32) -> bool {
+        self.reward = reward;
+        true
+    }
+
+    fn get_merkle(current_transaction: Vec<Transaction>) -> String {
+        let mut merkle = Vec::new();
+        for t in &current_transaction {
+            let hash = Chain::hash(t);
+            merkle.push(hash);
+        }
+        if merkle.len() % 2 == 1 {
+            let last = merkle.last().cloned().unwrap();
+            merkle.push(last);
+        }
+        while merkle.len() > 1 {
+            let mut h1 = merkle.remove(0);
+            let mut h2 = merkle.remove(0);
+            h1.push_str(&mut h2);
+            let nh = Chain::hash(&h1);
+            merkle.push(nh);
+        }
+        merkle.pop().unwrap()
+    }
+
+    pub fn proof_of_work(header: &mut Blockheader) {
+        loop {
+            let hash = Chain::hash(header);
+            let slice = &hash[..header.difficulty as usize];
+            match slice.parse::<u32>() {
+                Ok(val) => {
+                    if val != 0 {
+                        header.nonce += 1;
+                    } else {
+                        println!("Block hash: {}", hash);
+                        break;
+                    }
+                },
+                Err(_) => {
+                    header.nonce += 1;
+                    continue;
+                }
+            }
+        }
+    }
+
+    pub fn hash<T: serd::Serialize>(item &T) -> String {
+        let input = serde_json::to_string(&item).unwrap();
+        let mut hasher = Sha256::default();
+        hasher.input(input.as_bytes());
+        let res = hasher.result();
+        let vec_res = res.to_vec();
+        Chain::hex_to_string(vec_res.as_slice())
+    }
+
+    pub fn hex_to_string(vec_res: &[u8]) -> String {
+        let mut s = String::new();
+        for b in vec_res {
+            write!(s, "{:x}", b).expect("Unable to write");
+        }
+        s
+    }
 }
