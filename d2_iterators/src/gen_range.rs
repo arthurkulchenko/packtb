@@ -1,7 +1,8 @@
 use core::ops::AddAssign;
 
 pub trait Rangable: PartialOrd+std::ops::AddAssign+Copy {}
-// WHY: do we need need impl statement here?
+
+// NOTICE: Blanket implementation to make all types that implement the AddAssign trait and the PartialOrd trait also implement the Rangable trait
 impl<T:AddAssign + PartialOrd + Copy> Rangable for T {}
 
 pub struct GenRangeIterator<T> {
@@ -21,9 +22,9 @@ impl <T:Rangable> Iterator for GenRangeIterator<T> {
     fn next(&mut self) -> Option<Self::Item> {
         if self.current >= self.stop { return None; }
 
-        let res = self.current;
+        let result = self.current;
         self.current += self.step;
-        Some(res)
+        Some(result)
     }
 }
 
