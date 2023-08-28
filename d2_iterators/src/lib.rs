@@ -1,5 +1,6 @@
 mod gen_range;
 mod combi;
+mod into_iter;
 
 pub struct RangeIterator {
     current: i32,
