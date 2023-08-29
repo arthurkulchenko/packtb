@@ -6,36 +6,35 @@ use std::time::Duration;
 // use futures::future::Future;
 // use futures::future;
 
-struct Add(u32, u32);
-
-// Result type of a message handler. Simply output of an Actor
-impl Message for Add {
-    type Result = Result<u32, ()>;
-}
-
 // ACTOR send and recieve messages of type Add.
-struct Adder;
+struct AdderActor;
 
-impl Actor for Adder {
+impl Actor for AdderActor {
     // type Context = SyncContext<Self>;
     type Context = Context<Self>;
 }
 
-impl Handler<Add> for Adder {
+struct AddMessage(u32, u32);
+
+// Result type of a message handler. Simply output of an Actor
+impl Message for AddMessage {
+    type Result = Result<u32, ()>;
+}
+
+impl Handler<AddMessage> for AdderActor {
     type Result = Result<u32, ()>;
 
-    fn handle(&mut self, msg: Add, _: &mut Self::Context) -> Self::Result {
+    fn handle(&mut self, msg: AddMessage, _: &mut Self::Context) -> Self::Result {
         let sum = msg.0 + msg.1;
         println!("Computed: {} + {} = {}", msg.0, msg.1, sum);
         Ok(sum)
     }
 }
 
-
 #[actix::main]
 async fn main() {
-    let addr = Adder.start();
-    let res = addr.send(Add(10, 5)).await; // <- send message and get future for result
+    let addr = AdderActor.start();
+    let res = addr.send(AddMessage(10, 5)).await; // <- send message and get future for result
 
     match res {
         Ok(result) => println!("SUM: {:?}", result),
