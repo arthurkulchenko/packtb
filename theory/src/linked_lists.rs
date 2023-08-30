@@ -65,11 +65,11 @@ impl ListIterator {
 impl Iterator for ListIterator {
     type Item = String;
     fn next(&mut self) -> Option<String> {
-        let current = &self.current;
+        let current_link = &self.current;
         let mut result = None;
-        self.current = match current {
-            Some(ref current) => {
-                let current = current.borrow();
+        self.current = match current_link {
+            Some(ref link) => {
+                let current = link.borrow();
                 result = Some(current.value.clone());
                 current.next.clone()
             },

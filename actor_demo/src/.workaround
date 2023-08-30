@@ -1,0 +1,35 @@
+// This example demonstrates how to send a message to an actor.
+
+use actix::prelude::*;
+
+struct MyActor;
+
+impl Actor for MyActor {
+    type Context = Context<Self>;
+}
+
+struct MyMessage;
+
+impl Message for MyMessage {
+    type Result = ();
+}
+
+impl Handler<MyMessage> for MyActor {
+    type Result = ();
+
+    fn handle(&mut self, _: MyMessage, _: &mut Self::Context) -> Self::Result {
+        println!("Message received!");
+    }
+}
+
+fn main() {
+    let system = System::new();
+    
+    // Start an actor and get its address
+    let addr: Addr<MyActor> = MyActor.start();
+    
+    // Send a message to the actor
+    addr.do_send(MyMessage);
+
+    system.run().unwrap();
+}
