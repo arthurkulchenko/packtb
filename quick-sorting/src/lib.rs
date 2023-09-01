@@ -1,6 +1,11 @@
+mod b_rand;
+
+// TODO: FIX
 pub fn pivot<T: PartialOrd>(v: &mut[T] ) -> usize {
-    let mut p = 0;
-    for i in 1..v.len() {
+    let mut p = b_rand::rand(v.len());
+    v.swap(p, 0);
+    // let mut p = 0;
+    for i in 1..(v.len() - 1) {
         if v[i] < v[p] {
             v.swap(p+1, i);
             v.swap(p, p+1);
