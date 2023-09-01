@@ -13,9 +13,6 @@ pub struct CompanyIter<'a> {
 impl<'a> Iterator for CompanyIter<'a> {
     type Item = &'a str;
     fn next(&mut self) -> Option<Self::Item> {
-        if self.index > 3 {
-            return None;
-        }
         let match_result = match self.index {
             1 => Some(self.company.ceo.as_str()),
             2 => Some(self.company.receptionist.as_str()),
