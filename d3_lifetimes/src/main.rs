@@ -17,7 +17,10 @@ fn main() {
     let p = part(&s);
     println!("{}", p);
     let tog = two_strings(p, &s);
+    // s.push_str("not that easy"); // won't work since will break reference
     println!("{:?}", tog);
+    s.push_str("can be done");
+    println!("{}", s);
 }
 
 fn make_str(n: i32) -> String {
