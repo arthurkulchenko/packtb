@@ -1,0 +1,9 @@
+let mut v3 = vec![0, 0, 1, 2, 3, 4];
+
+// Retain only the even elements.
+v3.retain(|x| x % 2 == 0);
+println!("{v3:?}");
+
+// Remove consecutive duplicates.
+v3.dedup();
+println!("{v3:?}");
