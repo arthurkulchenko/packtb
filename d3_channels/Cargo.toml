@@ -8,4 +8,9 @@ edition = "2021"
 name = "pool"
 path = "src/pool.rs"
 
+[[bin]]
+name = "rayon_pool"
+path = "src/rayon_pool.rs"
+
 [dependencies]
+rayon = "1.5.1"
