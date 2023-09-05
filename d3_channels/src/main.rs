@@ -19,6 +19,7 @@ pub fn with_arc() {
 }
 
 fn with_channels() {
+                                                      // turbofish notation
     let (sink, stream) = std::sync::mpsc::channel::<Box<dyn Fn(&mut String) + Send>>();
     // let stream = std::sync::Arc::new(std::sync::Mutex::new(stream));
     // let stream2 = stream.clone();
