@@ -169,9 +169,9 @@ mod specs {
     }
 
     #[test]
-    fn wip_macro_setter_derive() {
-        let c = Card::build("c".to_string()).strenght(4).build();
-        c.print();
-        assert_eq!(c.strenght, 4);
+    fn macro_setter_derive() {
+        let mut c = Card::build("c".to_string()).strenght(4).build();
+        c.set_name("punc".to_string());
+        assert_eq!(c.name, "punc");
     }
 }
