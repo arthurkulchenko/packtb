@@ -63,4 +63,15 @@ mod specs {
         // Pin::new(&mut f).poll(&mut std::task::Context<_>);
         assert_eq!(result, Ok(42));
     }
+
+    #[test]
+    fn async_send() {
+        let (sink, stream) = oneshot::channel();
+        block_on(async move {
+            let f = plus_one(42); // f is a future
+            let _ = sink.send(f.await - 1);
+        });
+        let result = block_on(stream);
+        assert_eq!(result, Ok(42))
+    }
 }
