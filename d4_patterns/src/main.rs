@@ -8,7 +8,7 @@ fn main() {
 enum Property {
     Simple(&'static str, String),
     Style(&'static str, String),
-    Transform(String)
+    // Transform(String)
 }
 
 #[derive(Debug, PartialEq)]
@@ -60,7 +60,7 @@ impl SvgTag {
 }
 
 #[cfg(test)]
-mod test {
+mod spec {
     use crate::Property::Simple;
     use crate::Property::Style;
     use crate::SvgTag;
