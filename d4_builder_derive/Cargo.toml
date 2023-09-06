@@ -1,12 +1,10 @@
 [package]
-name = "d4_patterns"
+name = "d4_builder_derive"
 version = "0.1.0"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-[[bin]]
-name = "default_properties"
-path = "src/default_properties.rs"
+[lib]
+proc_macro = true
 
 [dependencies]
-d4_builder_derive = { path = "../d4_builder_derive" }

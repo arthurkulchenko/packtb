@@ -1,4 +1,5 @@
 use std::collections::BTreeMap;
+use d4_builder_derive::Setter;
 
 // #[derive(Debug, PartialEq, PartialOrd, Ord, Eq, Clone, Copy)]
 #[derive(Debug, PartialEq, PartialOrd, Ord, Eq)]
@@ -30,7 +31,7 @@ pub enum Ability {
     Taunt
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Setter)]
 pub struct Card {
     pub name: String,
     pub strenght: i32,
@@ -165,5 +166,12 @@ mod specs {
         let wrap = TriggeerableWrap { a: c, b: c2 };
         assert_eq!(wrap.trigger(&Trigger::BattleCry).unwrap(), "Cry me a river");
         assert_eq!(wrap.trigger(&Trigger::Death).unwrap(), "You DIE");
+    }
+
+    #[test]
+    fn wip_macro_setter_derive() {
+        let c = Card::build("c".to_string()).strenght(4).build();
+        c.print();
+        assert_eq!(c.strenght, 4);
     }
 }
