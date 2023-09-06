@@ -1,7 +1,10 @@
 use std::fmt::Display;
 
+// pub mod svg_macro;
+// pub mod default_properties;
+
 fn main() {
-    println!("Hello, world!");
+    // println!("Hello, world!");
 }
 
 #[derive(Debug, PartialEq)]
@@ -60,13 +63,13 @@ impl SvgTag {
 }
 
 #[cfg(test)]
-mod spec {
+mod specs {
     use crate::Property::Simple;
     use crate::Property::Style;
     use crate::SvgTag;
 
 #[test]
-    fn spec() {
+    fn card_builder_creates_card() {
         let a = SvgTag::new("svg")
                         .width("60px")
                         .height("80px")

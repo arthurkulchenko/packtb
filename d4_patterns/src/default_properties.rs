@@ -113,10 +113,9 @@ impl CardBuilder {
 #[cfg(test)]
 mod specs {
     use super::*;
-    use crate::{Card, Trigger};
 
     #[test]
-    fn cards_get_builded() {
+    fn cards_builder_method_creates_card() {
         let c = Card::build("General Blight".to_string()).strenght(4).trigger(Trigger::BattleCry, "Deal 2 Damage".to_string()).build();
         let mut c2_triggers = BTreeMap::new();
         c2_triggers.insert(Trigger::BattleCry, "Deal 2 Damage".to_string());
@@ -132,7 +131,7 @@ mod specs {
     }
 
     #[test]
-    fn card_default() {
+    fn cards_have_default_trait() {
         let c = Card { name: "some name".to_string(), ..Default::default() };
         let c2 = Card {
             name: "some name".to_string(),
@@ -146,7 +145,7 @@ mod specs {
     }
 
     #[test]
-    fn card_default_impl() {
+    fn cards_have_default_impl() {
         let c = Card::default();
         let c2 = Card {
             name: "".to_string(),
@@ -160,7 +159,7 @@ mod specs {
     }
 
     #[test]
-    fn trigger_wrap() {
+    fn trigger_wrap_helps_to_trigger_corresponsing_trigger() {
         let c = Card::build("c".to_string()).trigger(Trigger::BattleCry, "Cry me a river".to_string()).build();
         let c2 = Card::build("c2".to_string()).trigger(Trigger::Death, "You DIE".to_string()).build();
         let wrap = TriggeerableWrap { a: c, b: c2 };
