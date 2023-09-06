@@ -14,7 +14,7 @@ pub enum Trigger {
     Damage,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Default)]
 pub struct Card {
     pub name: String,
     pub strenght: i32,
@@ -30,7 +30,7 @@ impl Card {
     }
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Default)]
 pub struct CardBuilder {
     pub name: String,
     pub strenght: Option<i32>,
@@ -44,11 +44,12 @@ impl CardBuilder {
     pub fn new(name: String) -> Self {
         CardBuilder {
             name,
-            strenght: None,
-            health: None,
-            cost: None,
-            abilities: Vec::new(),
-            triggers: BTreeMap::new(),
+            ..Default::default()
+            // strenght: None,
+            // health: None,
+            // cost: None,
+            // abilities: Vec::new(),
+            // triggers: BTreeMap::new(),
         }
     }
 
@@ -91,6 +92,21 @@ mod specs {
             health: 1,
             abilities: Vec::new(),
             triggers: c2_triggers,
+        };
+        assert_eq!(c, c2);
+    }
+
+    #[test]
+    fn test_card_default() {
+        // let c = Card::default();
+        let c = Card { name: "some name".to_string(), ..Default::default() };
+        let c2 = Card {
+            name: "some name".to_string(),
+            strenght: 0,
+            cost: 0,
+            health: 0,
+            abilities: Vec::new(),
+            triggers: BTreeMap::new(),
         };
         assert_eq!(c, c2);
     }
