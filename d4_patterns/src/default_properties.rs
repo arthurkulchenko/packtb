@@ -1,17 +1,33 @@
 use std::collections::BTreeMap;
 
-#[derive(Debug, PartialEq)]
-pub enum Ability {
-    Charge,
-    Taunt
-}
-
+// #[derive(Debug, PartialEq, PartialOrd, Ord, Eq, Clone, Copy)]
 #[derive(Debug, PartialEq, PartialOrd, Ord, Eq)]
 pub enum Trigger {
     BattleCry,
     Death,
     EnemyDeath,
     Damage,
+}
+
+pub trait Triggerable {
+    fn trigger(&self, t: &Trigger) -> Option<String>;
+}
+
+pub struct TriggeerableWrap<A: Triggerable, B: Triggerable> {
+    a: A,
+    b: B,
+}
+
+impl <A: Triggerable, B: Triggerable> Triggerable for TriggeerableWrap<A, B> {
+    fn trigger(&self, t: &Trigger) -> Option<String> {
+        self.a.trigger(t).or_else(|| self.b.trigger(t))
+    }
+}
+
+#[derive(Debug, PartialEq)]
+pub enum Ability {
+    Charge,
+    Taunt
 }
 
 #[derive(Debug, PartialEq)]
@@ -27,6 +43,12 @@ pub struct Card {
 impl Card {
     pub fn build(name: String) -> CardBuilder {
         CardBuilder::new(name)
+    }
+}
+
+impl Triggerable for Card {
+    fn trigger(&self, t: &Trigger) -> Option<String> {
+        self.triggers.get(t).map(|s| s.to_string())
     }
 }
 
@@ -135,5 +157,14 @@ mod specs {
             triggers: BTreeMap::new(),
         };
         assert_eq!(c, c2);
+    }
+
+    #[test]
+    fn trigger_wrap() {
+        let c = Card::build("c".to_string()).trigger(Trigger::BattleCry, "Cry me a river".to_string()).build();
+        let c2 = Card::build("c2".to_string()).trigger(Trigger::Death, "You DIE".to_string()).build();
+        let wrap = TriggeerableWrap { a: c, b: c2 };
+        assert_eq!(wrap.trigger(&Trigger::BattleCry).unwrap(), "Cry me a river");
+        assert_eq!(wrap.trigger(&Trigger::Death).unwrap(), "You DIE");
     }
 }
