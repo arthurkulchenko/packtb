@@ -1,11 +1,7 @@
 use std::collections::BTreeMap;
+use d4_builder_derive::Setter;
 
-#[derive(Debug, PartialEq)]
-pub enum Ability {
-    Charge,
-    Taunt
-}
-
+// #[derive(Debug, PartialEq, PartialOrd, Ord, Eq, Clone, Copy)]
 #[derive(Debug, PartialEq, PartialOrd, Ord, Eq)]
 pub enum Trigger {
     BattleCry,
@@ -14,7 +10,28 @@ pub enum Trigger {
     Damage,
 }
 
+pub trait Triggerable {
+    fn trigger(&self, t: &Trigger) -> Option<String>;
+}
+
+pub struct TriggeerableWrap<A: Triggerable, B: Triggerable> {
+    a: A,
+    b: B,
+}
+
+impl <A: Triggerable, B: Triggerable> Triggerable for TriggeerableWrap<A, B> {
+    fn trigger(&self, t: &Trigger) -> Option<String> {
+        self.a.trigger(t).or_else(|| self.b.trigger(t))
+    }
+}
+
 #[derive(Debug, PartialEq)]
+pub enum Ability {
+    Charge,
+    Taunt
+}
+
+#[derive(Debug, PartialEq, Setter)]
 pub struct Card {
     pub name: String,
     pub strenght: i32,
@@ -27,6 +44,12 @@ pub struct Card {
 impl Card {
     pub fn build(name: String) -> CardBuilder {
         CardBuilder::new(name)
+    }
+}
+
+impl Triggerable for Card {
+    fn trigger(&self, t: &Trigger) -> Option<String> {
+        self.triggers.get(t).map(|s| s.to_string())
     }
 }
 
@@ -91,10 +114,9 @@ impl CardBuilder {
 #[cfg(test)]
 mod specs {
     use super::*;
-    use crate::{Card, Trigger};
 
     #[test]
-    fn cards_get_builded() {
+    fn cards_builder_method_creates_card() {
         let c = Card::build("General Blight".to_string()).strenght(4).trigger(Trigger::BattleCry, "Deal 2 Damage".to_string()).build();
         let mut c2_triggers = BTreeMap::new();
         c2_triggers.insert(Trigger::BattleCry, "Deal 2 Damage".to_string());
@@ -110,7 +132,7 @@ mod specs {
     }
 
     #[test]
-    fn card_default() {
+    fn cards_have_default_trait() {
         let c = Card { name: "some name".to_string(), ..Default::default() };
         let c2 = Card {
             name: "some name".to_string(),
@@ -124,7 +146,7 @@ mod specs {
     }
 
     #[test]
-    fn card_default_impl() {
+    fn cards_have_default_impl() {
         let c = Card::default();
         let c2 = Card {
             name: "".to_string(),
@@ -135,5 +157,21 @@ mod specs {
             triggers: BTreeMap::new(),
         };
         assert_eq!(c, c2);
+    }
+
+    #[test]
+    fn trigger_wrap_helps_to_trigger_corresponsing_trigger() {
+        let c = Card::build("c".to_string()).trigger(Trigger::BattleCry, "Cry me a river".to_string()).build();
+        let c2 = Card::build("c2".to_string()).trigger(Trigger::Death, "You DIE".to_string()).build();
+        let wrap = TriggeerableWrap { a: c, b: c2 };
+        assert_eq!(wrap.trigger(&Trigger::BattleCry).unwrap(), "Cry me a river");
+        assert_eq!(wrap.trigger(&Trigger::Death).unwrap(), "You DIE");
+    }
+
+    #[test]
+    fn macro_setter_derive() {
+        let mut c = Card::build("c".to_string()).strenght(4).build();
+        c.set_name("punc".to_string());
+        assert_eq!(c.name, "punc");
     }
 }
