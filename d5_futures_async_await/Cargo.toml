@@ -4,6 +4,15 @@ version = "0.1.0"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[lib]
+name = "d5_futures_async_await"
+path = "src/lib.rs"
+
+[[bin]]
+name = "d5_futures_async_await_server"
+path = "main.rs"
 
 [dependencies]
 futures = "0.3"
+tokio = { version = "1.5", features = ["full"] }
+failure = "0.1"

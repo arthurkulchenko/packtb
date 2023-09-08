@@ -2,6 +2,9 @@
 .env
 tmp
 */target/debug
+*/*/target/debug
 */target/doc
+*/*/target/doc
 */Cargo.lock
+*/*/Cargo.lock
 */target
