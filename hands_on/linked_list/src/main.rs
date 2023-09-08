@@ -1,4 +1,4 @@
-#[derive(Debug, Copy)]
+#[derive(Debug)]
 pub struct LinkedList<T>(
     Option<(T, Node<T>)>
 );
@@ -19,13 +19,16 @@ impl<T> LinkedList<T> {
     }
 
     pub fn push_back(&mut self, data: T) {
-        let mut list = self;
-        while let Some((_data, nested_node)) = &mut list.0 {
-            list = *nested_node;
+        match self.0 {
+            Some((_, ref mut node)) => node.push_back(data),
+            None => self.push_front(data),
         }
-        list.0 = Some((data, Box::new(LinkedList(None))));
     }
 }
 fn main() {
-    println!("Hello, world!");
+    let mut ll = LinkedList::new();
+    ll.push_front(5);
+    ll.push_back(6);
+    ll.push_front(4);
+    println!("{:?}", ll);
 }
