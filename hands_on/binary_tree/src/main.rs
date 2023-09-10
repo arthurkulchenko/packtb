@@ -1,7 +1,15 @@
-type NodeRef<T> = Box<Node<T>>;
+use std::fmt::Debug;
 
 #[derive(Debug)]
-pub struct BTree<T>(Option<NodeRef<T>>);
+pub struct Node<T> {
+    // parent
+    data: T,
+    left: BTree<T>,
+    right: BTree<T>,
+}
+
+#[derive(Debug)]
+pub struct BTree<T>(Option<Box<Node<T>>>);
 
 impl<T> BTree<T> {
     pub fn new() -> Self {
@@ -9,6 +17,7 @@ impl<T> BTree<T> {
     }
 }
 
+// NOTICE: Primitive
 impl<T: PartialOrd> BTree<T> {
     pub fn add(&mut self, data: T) {
         match self.0 {
@@ -24,12 +33,18 @@ impl<T: PartialOrd> BTree<T> {
     }
 }
 
-#[derive(Debug)]
-pub struct Node<T> {
-    // parent
-    data: T,
-    left: BTree<T>,
-    right: BTree<T>,
+impl <T: Debug> BTree<T> {
+    pub fn print_lfirst(&self, depth: u32) {
+        if let Some(ref node) = self.0 {
+            node.left.print_lfirst(depth + 1);
+            let mut spacing = String::new();
+            for _ in 0..depth {
+                spacing.push('.');
+            }
+            println!("{}{:?}", spacing, node.data);
+            node.right.print_lfirst(depth + 1);
+        }
+    }
 }
 
 fn main() {
@@ -40,5 +55,6 @@ fn main() {
     tree.add(5);
     tree.add(2);
     tree.add(1);
-    println!("{:?}", tree);
+    // println!("{:?}", tree);
+    tree.print_lfirst(0);
 }
