@@ -52,6 +52,16 @@ impl HuffmanNode {
             }
         }
     }
+
+    pub fn encode_str(&self, s: &str) -> Option<Vec<char>> {
+        let mut result = Vec::new();
+        for c in s.chars() {
+            let v = self.encode_char(c)?;
+            // WHY: What the point to turn v to into_iter??
+            result.extend(v.into_iter());
+        }
+        Some(result)
+    }
 }
 
 #[derive(Debug)]
@@ -94,4 +104,5 @@ fn main() {
     let tree = build_tree(s);
     tree.print_left_first(0, '<');
     println!("n = {:?}", tree.encode_char('n'));
+    println!("ec = {:?}", tree.encode_str(s));
 }
