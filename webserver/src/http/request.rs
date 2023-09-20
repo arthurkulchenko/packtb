@@ -1,4 +1,5 @@
 // use std::str::Utf8Error;
+use std::collections::HashMap;
 use crate::HttpMethods;
 use std::convert::TryFrom;
 // use std::error::Error;
@@ -48,7 +49,8 @@ use std::convert::TryFrom;
 pub struct Request {
     method: HttpMethods,
     path: String,
-    query: Option<String>,
+    // query: Option<String>,
+    query: Option<HashMap<String, String>>,
 }
 
 impl Request {
@@ -81,7 +83,16 @@ impl TryFrom<&[u8]> for Request {
         let path_query_len = path_query.len();
 
         let (p, q) = match path_query_len {
-            2 => { (path_query[0].to_string(), Some(path_query[1].to_string())) },
+            2 => {
+                // let qq = path_query[1].to_string()
+                let key_value_pairs = path_query[1].split("&").collect::<Vec<_>>();
+                let mut qq = HashMap::new();
+                for key_value in key_value_pairs {
+                    let key_value_array = key_value.split("=").collect::<Vec<_>>();
+                    qq.insert(key_value_array[0].to_string(), key_value_array[1].to_string());
+                }
+                (path_query[0].to_string(), Some(qq))
+            },
             _ => { (path_query[0].to_string(), None) }
         };
         // let (p, q) = (path_query[0], path_query[1]);
