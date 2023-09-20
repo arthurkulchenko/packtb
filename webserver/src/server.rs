@@ -1,6 +1,8 @@
 use crate::Request;
+use crate::Response;
+
 use std::net::TcpListener;
-use std::io::Read;
+use std::io::{Read, Write};
 // use std::convert::TryFrom;
 
 pub struct Server {
@@ -29,15 +31,18 @@ impl Server {
 
                         Ok(_req) => {
                             let result = Request::try_from(&buffer[..]);
-                            println!("{:?}", result);
-                            if let Err(message) = result {
-                                // println!("{}", message);
+                            // println!("{:?}", result);
+                            if let Err(_message) = result {
+                                println!("{}", "error message");
                                 return
                             }
 
                             result.unwrap();
-                            // match result {
-                            //     Ok(req) => req,
+                            let _response = Response { code: 200, status: "OK".to_string(), body: None };
+                            let resp = "HTTP/1.1 200 OK\r\n\r\nHello".to_string();
+                            write!(stream, "{}", resp);
+                            // match write!(stream, "HTTP/1.1 400 Not Found\r\n\r\n") {
+                            //     Ok(_) => println!("{}", "resp"),
                             //     Err(e) => println!("{}", e)
                             // }
                         },
