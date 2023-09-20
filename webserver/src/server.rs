@@ -29,8 +29,9 @@ impl Server {
 
                         Ok(_req) => {
                             let result = Request::try_from(&buffer[..]);
+                            println!("{:?}", result);
                             if let Err(message) = result {
-                                println!("{}", message);
+                                // println!("{}", message);
                                 return
                             }
 
