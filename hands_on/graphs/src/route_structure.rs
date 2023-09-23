@@ -2,6 +2,7 @@ use std::collections::{HashMap, HashSet};
 use std::hash::Hash;
 use std::rc::Rc;
 use std::fmt;
+use rand::prelude::*;
 
 #[derive(Debug)]
 pub struct GraphErr {
@@ -90,7 +91,7 @@ impl<T, E, ID: Clone + Hash + Eq> Graph<T, E, ID> {
     }
 }
 
-impl <T, E: Weighted, ID: Clone + Hash + Eq> Graph<T,E,ID> {
+impl <T, E: Weighted, ID: Clone + Hash + Eq + std::fmt::Debug> Graph<T,E,ID> {
     pub fn shortest_path(&self, from: ID, to: ID) -> Option<RRoute<ID>> {
         let mut visited: HashSet<ID> = HashSet::new();
         let mut routes = Vec::new();
@@ -197,6 +198,49 @@ impl <T, E: Weighted, ID: Clone + Hash + Eq> Graph<T,E,ID> {
         }
         self.shortest_path_r(route, start)
     }
+
+    pub fn complete_path(&self, path: &[ID]) -> Option<RRoute<ID>> {
+        if path.len() < 2 { return None; }
+
+        let mut route = Route::start_rc(path[0].clone());
+        for position in &path[1..path.len() - 1] {
+            if !route.contains(position) {
+                route = self.shortest_path_r(route, position.clone())?;
+            }
+        }
+        self.shortest_path_r(route, path[path.len() - 1].clone())
+    }
+
+    pub fn iter_salesman(&self, start: ID) -> Option<RRoute<ID>> {
+        let mut bpath: Vec<ID> = self.data.keys().map(|k| k.clone()).collect();
+        bpath.shuffle(&mut rand::thread_rng());
+        for n in 0..bpath.len() {
+            if bpath[n] == start {
+                bpath.swap(0, n);
+                break;
+            }
+        }
+        bpath.push(start);
+        let mut broute = self.complete_path(&bpath)?;
+        let mut no_imp = 0;
+        loop {
+            let mut p2 = bpath.clone();
+            let sa = (rand::random::<usize>() % (p2.len() - 2)) + 1;
+            let sb = (rand::random::<usize>() % (p2.len() - 2)) + 1;
+            p2.swap(sa, sb);
+            let r2 = self.complete_path(&p2)?;
+            if r2.length < broute.length {
+                println!("Improving on {} = \n{}", broute, r2);
+                bpath = p2;
+                broute = r2;
+                no_imp = 0;
+            }
+            no_imp += 1;
+            if no_imp >= 50 {
+                return Some(broute);
+            }
+        }
+    }
 }
 
 fn main() -> Result<(), GraphErr> {
@@ -219,8 +263,9 @@ fn main() -> Result<(), GraphErr> {
 
     println!("{}", route);
     println!("shortest_path A-D is {}", graph.shortest_path('A', 'D').unwrap());
-    println!("shortest_path H-B is {}", graph.shortest_path('H', 'B').unwrap());
+    println!("shortest_path  H-B is {}", graph.shortest_path('H', 'B').unwrap());
     println!("greedy salesman start from A = {}", graph.greedy_salesman('A').unwrap());
+    println!("iter salesman start from A = {}", graph.iter_salesman('A').unwrap());
 
     Ok(())
 }
