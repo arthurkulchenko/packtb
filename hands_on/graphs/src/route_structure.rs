@@ -2,6 +2,7 @@ use std::collections::{HashMap, HashSet};
 use std::hash::Hash;
 use std::rc::Rc;
 use std::fmt;
+use rand::prelude::*;
 
 #[derive(Debug)]
 pub struct GraphErr {
@@ -90,7 +91,7 @@ impl<T, E, ID: Clone + Hash + Eq> Graph<T, E, ID> {
     }
 }
 
-impl <T, E: Weighted, ID: Clone + Hash + Eq> Graph<T,E,ID> {
+impl <T, E: Weighted, ID: Clone + Hash + Eq + std::fmt::Debug> Graph<T,E,ID> {
     pub fn shortest_path(&self, from: ID, to: ID) -> Option<RRoute<ID>> {
         let mut visited: HashSet<ID> = HashSet::new();
         let mut routes = Vec::new();
@@ -135,6 +136,111 @@ impl <T, E: Weighted, ID: Clone + Hash + Eq> Graph<T,E,ID> {
             }
         }
     }
+
+    pub fn shortest_path_r(&self, from: RRoute<ID>, to: ID) -> Option<RRoute<ID>> {
+        let mut toset = HashSet::new();
+        toset.insert(to);
+        self.closest_path(from, &toset)
+    }
+
+    pub fn closest_path(&self, from: RRoute<ID>, to: &HashSet<ID>) -> Option<RRoute<ID>> {
+        let mut visited: HashSet<ID> = HashSet::new();
+        let mut routes = Vec::new();
+        routes.push(from);
+
+        loop {
+            let current_route = routes.pop()?;
+            if to.contains(&current_route.position) { return Some(current_route); }
+            if visited.contains(&current_route.position) { continue; }
+
+            visited.insert(current_route.position.clone());
+            let exist = self.data.get(&current_route.position)?;
+
+            for existed_id in &exist.1 {
+                let edge = self.edges.get(existed_id)?;
+                // WHAT: What is npos
+                let npos = if edge.1 == current_route.position {
+                    edge.2.clone()
+                } else {
+                    edge.1.clone()
+                };
+                let nlen = current_route.length + edge.0.weight();
+                let nroute = Rc::new(Route { position: npos, length: nlen, path: Some(current_route.clone()) });
+
+                if routes.len() == 0 {
+                    routes.push(nroute.clone());
+                    continue;
+                }
+
+                let mut index_after = routes.len() - 1;
+                loop {
+                    if routes[index_after].length > nlen {
+                        routes.insert(index_after + 1, nroute);
+                        break;
+                    }
+                    if index_after == 0 {
+                        routes.insert(0, nroute);
+                        break;
+                    }
+                    index_after -= 1;
+                }
+            }
+        }
+    }
+
+    fn greedy_salesman(&self, start: ID) -> Option<RRoute<ID>> {
+        let mut to_visit: HashSet<ID> = self.data.keys().map(|k| k.clone()).collect();
+        to_visit.remove(&start);
+        let mut route = Route::start_rc(start.clone());
+        while to_visit.len() > 0 {
+            route = self.closest_path(route, &to_visit)?;
+            to_visit.remove(&route.position);
+        }
+        self.shortest_path_r(route, start)
+    }
+
+    pub fn complete_path(&self, path: &[ID]) -> Option<RRoute<ID>> {
+        if path.len() < 2 { return None; }
+
+        let mut route = Route::start_rc(path[0].clone());
+        for position in &path[1..path.len() - 1] {
+            if !route.contains(position) {
+                route = self.shortest_path_r(route, position.clone())?;
+            }
+        }
+        self.shortest_path_r(route, path[path.len() - 1].clone())
+    }
+
+    pub fn iter_salesman(&self, start: ID) -> Option<RRoute<ID>> {
+        let mut bpath: Vec<ID> = self.data.keys().map(|k| k.clone()).collect();
+        bpath.shuffle(&mut rand::thread_rng());
+        for n in 0..bpath.len() {
+            if bpath[n] == start {
+                bpath.swap(0, n);
+                break;
+            }
+        }
+        bpath.push(start);
+        let mut broute = self.complete_path(&bpath)?;
+        let mut no_imp = 0;
+        loop {
+            let mut p2 = bpath.clone();
+            let sa = (rand::random::<usize>() % (p2.len() - 2)) + 1;
+            let sb = (rand::random::<usize>() % (p2.len() - 2)) + 1;
+            p2.swap(sa, sb);
+            let r2 = self.complete_path(&p2)?;
+            if r2.length < broute.length {
+                println!("Improving on {} = \n{}", broute, r2);
+                bpath = p2;
+                broute = r2;
+                no_imp = 0;
+            }
+            no_imp += 1;
+            if no_imp >= 50 {
+                return Some(broute);
+            }
+        }
+    }
 }
 
 fn main() -> Result<(), GraphErr> {
@@ -143,16 +249,23 @@ fn main() -> Result<(), GraphErr> {
         graph.add_node(x, ());
     }
     let _ = graph.add_edge('a','H', 'D', 4)?;
-    let _ = graph.add_edge('b','C', 'A', 14)?;
-    let _ = graph.add_edge('c','D', 'F', 2)?;
+    let _ = graph.add_edge('b','D', 'C', 14)?;
+    let _ = graph.add_edge('c','C', 'B', 2)?;
     let _ = graph.add_edge('d','H', 'A', 12)?;
-    let _ = graph.add_edge('e','E', 'D', 9)?;
+    let _ = graph.add_edge('e','A', 'C', 22)?;
+    let _ = graph.add_edge('f','H', 'G', 5)?;
+    let _ = graph.add_edge('g','G', 'A', 13)?;
+    let _ = graph.add_edge('h','A', 'F', 8)?;
+    let _ = graph.add_edge('i','F', 'E', 7)?;
+    let _ = graph.add_edge('j','C', 'F', 9)?;
 
     let route = Route::start_rc('A');
 
     println!("{}", route);
     println!("shortest_path A-D is {}", graph.shortest_path('A', 'D').unwrap());
-    println!("shortest_path H-B is {}", graph.shortest_path('H', 'D').unwrap());
+    println!("shortest_path  H-B is {}", graph.shortest_path('H', 'B').unwrap());
+    println!("greedy salesman start from A = {}", graph.greedy_salesman('A').unwrap());
+    println!("iter salesman start from A = {}", graph.iter_salesman('A').unwrap());
 
     Ok(())
 }
