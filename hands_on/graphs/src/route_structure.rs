@@ -205,17 +205,22 @@ fn main() -> Result<(), GraphErr> {
         graph.add_node(x, ());
     }
     let _ = graph.add_edge('a','H', 'D', 4)?;
-    let _ = graph.add_edge('b','C', 'A', 14)?;
-    let _ = graph.add_edge('c','D', 'F', 2)?;
+    let _ = graph.add_edge('b','D', 'C', 14)?;
+    let _ = graph.add_edge('c','C', 'B', 2)?;
     let _ = graph.add_edge('d','H', 'A', 12)?;
-    let _ = graph.add_edge('e','E', 'D', 9)?;
+    let _ = graph.add_edge('e','A', 'C', 22)?;
+    let _ = graph.add_edge('f','H', 'G', 5)?;
+    let _ = graph.add_edge('g','G', 'A', 13)?;
+    let _ = graph.add_edge('h','A', 'F', 8)?;
+    let _ = graph.add_edge('i','F', 'E', 7)?;
+    let _ = graph.add_edge('j','C', 'F', 9)?;
 
     let route = Route::start_rc('A');
 
     println!("{}", route);
     println!("shortest_path A-D is {}", graph.shortest_path('A', 'D').unwrap());
-    println!("shortest_path H-B is {}", graph.shortest_path('H', 'D').unwrap());
-    // println!("greedy salesman start from A = {}", graph.greedy_salesman('A').unwrap());
+    println!("shortest_path H-B is {}", graph.shortest_path('H', 'B').unwrap());
+    println!("greedy salesman start from A = {}", graph.greedy_salesman('A').unwrap());
 
     Ok(())
 }
