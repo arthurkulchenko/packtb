@@ -119,7 +119,23 @@ impl <K: Hash + Eq, V> Hmap<K,V> {
     }
 }
 
+#[cfg(test)]
+mod test {
+    use crate::Hmap;
 
+    #[test]
+    fn get_right_values() {
+        let mut hm = Hmap::new();
+        hm.insert("string1".to_string(), 4);
+        hm.insert("string2".to_string(), 3);
+        hm.insert("string3".to_string(), 5);
+        hm.insert("string4".to_string(), 22);
+        hm.insert("string5".to_string(), 1);
+        hm.insert("string6".to_string(), 0);
+        hm.insert("string7".to_string(), 9);
+        assert_eq!(hm.get("string1"), Some(&4));
+    }
+}
 
 
 
