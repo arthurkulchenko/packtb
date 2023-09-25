@@ -28,6 +28,7 @@ impl <K: Hash + Eq, V> BucketList<K,V> {
         self.buckets[hash_index].len()
     }
 
+    // NOTICE: Rework ====================
     fn get_mut<KB>(&mut self, k: &KB) -> Option<&V> where K: Borrow<KB>, KB: Hash + Eq + ?Sized  {
         let hash_index = (hash(self.seed, &k) as usize) % self.buckets.len();
         for (inner_key, inner_value) in &mut self.buckets[hash_index] {
@@ -36,6 +37,7 @@ impl <K: Hash + Eq, V> BucketList<K,V> {
         None
     }
 
+    // NOTICE: Rework ====================
     fn get<KB>(&self, k: &KB) -> Option<&V> where K: Borrow<KB>, KB: Hash + Eq + ?Sized  {
         let hash_index = (hash(self.seed, &k) as usize) % self.buckets.len();
         for (inner_key, inner_value) in &self.buckets[hash_index] {
@@ -81,6 +83,7 @@ impl <K: Hash + Eq, V: std::fmt::Debug> Hmap<K,V> {
         if let Some(inner_value) = &mut self.main.get_mut(&k) {
             println!("~~~~~~~~~ Updating value - {:?}, to value - {:?}", inner_value, v);
             *inner_value = &v;
+            // DEBUG: Sets value right, but specs don't pass
             println!("~~~~~~~~~ New value is {:?}", inner_value);
             return;
         }
@@ -143,9 +146,6 @@ mod test {
         hm.insert("string5".to_string(), 1);
         hm.insert("string6".to_string(), 0);
 
-        hm.insert("string7".to_string(), 9);
-        hm.insert("string7".to_string(), 3);
-
         assert_eq!(hm.get("string1"), Some(&4));
         assert_eq!(hm.get("string2"), Some(&3));
         assert_eq!(hm.get("string3"), Some(&5));
@@ -153,17 +153,12 @@ mod test {
         assert_eq!(hm.get("string5"), Some(&1));
         assert_eq!(hm.get("string6"), Some(&0));
 
-        assert_eq!(hm.len(), 7 + 2);
+        hm.insert("string7".to_string(), 9);
+        assert_eq!(hm.get("string7"), Some(&9));
 
+        hm.insert("string7".to_string(), 3);
         assert_eq!(hm.get("string7"), Some(&3));
+
+        assert_eq!(hm.len(), 7 + 2);
     }
 }
-
-
-
-
-
-
-
-
-
