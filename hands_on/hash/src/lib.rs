@@ -1,9 +1,13 @@
+// FIXME: fix implementation
 mod hasher;
 
 use rand;
 use std::hash::Hash;
 use hasher::hash;
 use std::borrow::Borrow;
+
+const BSIZE: usize = 8;
+const BAUXSIZE: usize = 8;
 
 #[derive(Debug)]
 pub struct BucketList<K,V> {
@@ -19,12 +23,17 @@ impl <K: Hash + Eq, V> BucketList<K,V> {
 
     fn push(&mut self, key: K, value: V) -> usize {
         let hash_index = (hash(self.seed, &key) as usize) % self.buckets.len();
-        self.buckets[hash_index].push((key, value));
+        // if self.buckets[hash_index].len() == 1 {
+        //     self.buckets[0].push((key, value));
+        // } else {
+            self.buckets[hash_index].push((key, value));
+        // }
         self.length += 1;
         self.buckets[hash_index].len()
     }
 
-    fn get_mut<KB>(&mut self, k: &KB) -> Option<&V> where K: Borrow<KB>, KB: Hash + Eq + ?Sized  {
+    // NOTICE: Rework ====================
+    fn get_mut<KB>(&mut self, k: &KB) -> Option<&mut V> where K: Borrow<KB>, KB: Hash + Eq + ?Sized  {
         let hash_index = (hash(self.seed, &k) as usize) % self.buckets.len();
         for (inner_key, inner_value) in &mut self.buckets[hash_index] {
             if k == (inner_key as &K).borrow() { return Some(inner_value) }
@@ -32,6 +41,7 @@ impl <K: Hash + Eq, V> BucketList<K,V> {
         None
     }
 
+    // NOTICE: Rework ====================
     fn get<KB>(&self, k: &KB) -> Option<&V> where K: Borrow<KB>, KB: Hash + Eq + ?Sized  {
         let hash_index = (hash(self.seed, &k) as usize) % self.buckets.len();
         for (inner_key, inner_value) in &self.buckets[hash_index] {
@@ -63,34 +73,33 @@ pub struct Hmap<K, V> {
     aux: BucketList<K,V> // grow
 }
 
-const BSIZE: usize = 8;
-const BAUXSIZE: usize = 8;
-
-impl <K: Hash + Eq, V> Hmap<K,V> {
+impl <K: Hash + Eq, V: std::fmt::Debug> Hmap<K,V> {
     pub fn new() -> Self {
-        Self { n_moved: 0, main: BucketList::new(), aux: BucketList::new() }
+        let instance = Self { n_moved: 0, main: BucketList::new(), aux: BucketList::new() };
+        println!("~~~~~~~~~ New Hmap instance len() is {:?}", instance.bucket_count());
+        instance
     }
 
     pub fn insert(&mut self, k: K, v: V) {
         if let Some(inner_value) = &mut self.main.get_mut(&k) {
-            *inner_value = &v;
+            **inner_value = v;
             return;
         }
         if let Some(inner_value) = &mut self.aux.get_mut(&k) {
-            *inner_value = &v;
+            **inner_value = v;
             return;
         }
         if self.n_moved > 0 {
             self.aux.push(k, v);
-            self.move_buacket();
+            self.move_bucket();
             return;
         }
         if self.main.push(k, v) > BSIZE / 2 {
-            self.move_buacket();
+            self.move_bucket();
         }
     }
 
-    pub fn get_mut<KR>(&mut self, kr: &mut KR) -> Option<& V> where K: Borrow<KR>, KR: Hash + Eq + ?Sized {
+    pub fn get_mut<KR>(&mut self, kr: &mut KR) -> Option<&mut V> where K: Borrow<KR>, KR: Hash + Eq + ?Sized {
         if let Some(inner_value) = self.main.get_mut(kr) { return Some(inner_value); }
         self.aux.get_mut(kr)
     }
@@ -99,11 +108,11 @@ impl <K: Hash + Eq, V> Hmap<K,V> {
         self.main.get(kr).or_else(|| self.aux.get(kr))
     }
 
-    pub fn len(&self) -> usize {
+    pub fn bucket_count(&self) -> usize {
         self.main.buckets.len() + self.aux.buckets.len()
     }
 
-    pub fn move_buacket(&mut self) {
+    pub fn move_bucket(&mut self) {
         if self.n_moved == 0 {
             self.aux.set_buckets(self.main.buckets.len() * BAUXSIZE);
         }
@@ -119,13 +128,57 @@ impl <K: Hash + Eq, V> Hmap<K,V> {
     }
 }
 
+#[cfg(test)]
+mod test {
+    use crate::Hmap;
 
+    #[test]
+    fn get_right_values() {
+        let mut hm = Hmap::new();
+        assert_eq!(hm.bucket_count(), 2);
 
+        hm.insert("string1".to_string(), 4);
+        hm.insert("string2".to_string(), 3);
+        hm.insert("string3".to_string(), 5);
+        hm.insert("string4".to_string(), 22);
+        hm.insert("string5".to_string(), 1);
+        hm.insert("string6".to_string(), 0);
 
+        assert_eq!(hm.get("string1"), Some(&4));
+        assert_eq!(hm.get("string2"), Some(&3));
+        assert_eq!(hm.get("string3"), Some(&5));
+        assert_eq!(hm.get("string4"), Some(&22));
+        assert_eq!(hm.get("string5"), Some(&1));
+        assert_eq!(hm.get("string6"), Some(&0));
 
+        hm.insert("string7".to_string(), 9);
+        assert_eq!(hm.get("string7"), Some(&9));
 
+        hm.insert("string7".to_string(), 3);
+        println!("{:?}", hm);
+        assert_eq!(hm.get("string7"), Some(&3));
 
+        assert_eq!(hm.bucket_count(), 9);
+    }
 
+    #[test]
+    fn lots_of_numbers() {
+        let mut hm = Hmap::new();
+        for x in 0..500 {
+            hm.insert(x, x + 12);
+        }
+        assert_eq!(hm.get(&50), Some(&62));
+        // assert_eq!(hm.get(&1000), Some(&1012));
+        println!("self.main.buckets.len() = {}", hm.main.buckets.len());
+        println!("self.aux.buckets.len() = {}", hm.aux.buckets.len());
+        // assert_eq!(hm.bucket_count(), 500 + 2); // 36_864, 294_912
+    }
+}
 
+// failures:
 
-
+// ---- test::lots_of_numbers stdout ----
+// ~~~~~~~~~ New Hmap instance len() is 2
+// thread 'test::lots_of_numbers' panicked at 'assertion failed: `(left == right)`
+//   left: `294912`,
+//  right: `10002`', src/lib.rs:172:9
