@@ -19,7 +19,11 @@ impl <K: Hash + Eq, V> BucketList<K,V> {
 
     fn push(&mut self, key: K, value: V) -> usize {
         let hash_index = (hash(self.seed, &key) as usize) % self.buckets.len();
-        self.buckets[hash_index].push((key, value));
+        // if self.buckets[hash_index].len() == 1 {
+        //     self.buckets[0].push((key, value));
+        // } else {
+            self.buckets[hash_index].push((key, value));
+        // }
         self.length += 1;
         self.buckets[hash_index].len()
     }
@@ -66,14 +70,18 @@ pub struct Hmap<K, V> {
 const BSIZE: usize = 8;
 const BAUXSIZE: usize = 8;
 
-impl <K: Hash + Eq, V> Hmap<K,V> {
+impl <K: Hash + Eq, V: std::fmt::Debug> Hmap<K,V> {
     pub fn new() -> Self {
-        Self { n_moved: 0, main: BucketList::new(), aux: BucketList::new() }
+        let instance = Self { n_moved: 0, main: BucketList::new(), aux: BucketList::new() };
+        println!("~~~~~~~~~ New Hmap instance len() is {:?}", instance.len());
+        instance
     }
 
     pub fn insert(&mut self, k: K, v: V) {
         if let Some(inner_value) = &mut self.main.get_mut(&k) {
+            println!("~~~~~~~~~ Updating value - {:?}, to value - {:?}", inner_value, v);
             *inner_value = &v;
+            println!("~~~~~~~~~ New value is {:?}", inner_value);
             return;
         }
         if let Some(inner_value) = &mut self.aux.get_mut(&k) {
@@ -82,11 +90,11 @@ impl <K: Hash + Eq, V> Hmap<K,V> {
         }
         if self.n_moved > 0 {
             self.aux.push(k, v);
-            self.move_buacket();
+            self.move_bucket();
             return;
         }
         if self.main.push(k, v) > BSIZE / 2 {
-            self.move_buacket();
+            self.move_bucket();
         }
     }
 
@@ -103,7 +111,7 @@ impl <K: Hash + Eq, V> Hmap<K,V> {
         self.main.buckets.len() + self.aux.buckets.len()
     }
 
-    pub fn move_buacket(&mut self) {
+    pub fn move_bucket(&mut self) {
         if self.n_moved == 0 {
             self.aux.set_buckets(self.main.buckets.len() * BAUXSIZE);
         }
@@ -126,14 +134,28 @@ mod test {
     #[test]
     fn get_right_values() {
         let mut hm = Hmap::new();
+        assert_eq!(hm.len(), 2);
+
         hm.insert("string1".to_string(), 4);
         hm.insert("string2".to_string(), 3);
         hm.insert("string3".to_string(), 5);
         hm.insert("string4".to_string(), 22);
         hm.insert("string5".to_string(), 1);
         hm.insert("string6".to_string(), 0);
+
         hm.insert("string7".to_string(), 9);
+        hm.insert("string7".to_string(), 3);
+
         assert_eq!(hm.get("string1"), Some(&4));
+        assert_eq!(hm.get("string2"), Some(&3));
+        assert_eq!(hm.get("string3"), Some(&5));
+        assert_eq!(hm.get("string4"), Some(&22));
+        assert_eq!(hm.get("string5"), Some(&1));
+        assert_eq!(hm.get("string6"), Some(&0));
+
+        assert_eq!(hm.len(), 7 + 2);
+
+        assert_eq!(hm.get("string7"), Some(&3));
     }
 }
 
