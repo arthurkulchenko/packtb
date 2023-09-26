@@ -1,6 +1,6 @@
 use crate::data::*;
 use crate::store::EcsStore;
-use termion::*;
+use termion::raw::RawTerminal;
 use rand::Rng;
 
 pub fn move_sys<D: EcsStore<Direction>, P: EcsStore<Position>>(dd: &D, pp: &mut P) {
@@ -45,4 +45,33 @@ pub fn collision_sys<P: EcsStore<Position>, S: EcsStore<Strenght>>(pp: &P, ss: &
             }
         });
     });
+
+    for (og, ig) in collisions {
+        let damage = match ss.get(og) {
+            Some(b) => b.s,
+            None => continue
+        };
+        let h_up = if let Some(bumpee) = ss.get_mut(ig) {
+            let n = bumpee.s + 1;
+            bumpee.h -= damage;
+            if bumpee.h <= 0 {
+              n
+            } else {
+              0
+            }
+        } else {
+          0
+        };
+
+        if h_up > 0 {
+            if let Some(bumper) = ss.get_mut(og) {
+                bumper.h += h_up;
+                bumper.s += 1;
+            }
+        }
+    }
+}
+
+pub fn render_sys<T: std::io::Write, P: EcsStore<Position>, S: EcsStore<Strenght>>(t: &mut RawTerminal<T>, pp: &P, ss: &S) {
+    // TODO
 }
