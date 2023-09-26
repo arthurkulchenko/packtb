@@ -1,60 +1,64 @@
-#[derive(Copy, Clone, PartialEq, Debug)]
-pub struct GenData {
-    position: usize,
-    gen: u64
+use crate::gen::GenData;
+
+pub trait EcsStore<T> {
+    fn get(&self, g: GenData) -> Option<&T>;
+    fn get_mut(&mut self, g: GenData) -> Option<&mut T>;
+    fn insert(&mut self, g: GenData, t: T);
+    fn remove(&mut self, g: GenData);
+
+    fn for_each<F: FnMut(GenData, &T)>(&self, f: F);
+    fn for_each_mut<F: FnMut(GenData, &mut T)>(&mut self, f: F);
 }
 
-pub struct EntityActive {
-    active: bool,
-    gen: u64
+pub struct VecStore<T> {
+    items: Vec<Option<(u64, T)>>,
 }
 
-pub struct GenManager {
-    items: Vec<EntityActive>,
-    drops: Vec<usize>
-}
-
-impl GenManager {
+impl<T> VecStore<T> {
     pub fn new() -> Self {
-        Self { items: Vec::new(), drops: Vec::new() }
-    }
-
-    pub fn next(&mut self) -> GenData {
-        if let Some(location) = self.drops.pop() {
-            let active_entity = &mut self.items[location];
-            active_entity.active = true;
-            active_entity.gen += 1;
-            return GenData { position: location, gen: active_entity.gen };
-        }
-        self.items.push(EntityActive { active: true, gen: 0 });
-        return GenData { position: self.items.len() - 1, gen: 0 };
-    }
-
-    pub fn drop(&mut self, g: GenData) {
-      if let Some(active_entity) = self.items.get_mut(g.position) {
-          if active_entity.active && active_entity.gen == g.gen {
-              active_entity.active = false;
-              self.drops.push(g.position);
-          }
-      }
+        Self { items: Vec::new() }
     }
 }
 
-#[cfg(test)]
-mod specs {
-    use super::*;
-
-    #[test]
-    fn items_drop() {
-        let mut gm = GenManager::new();
-        let g = gm.next();
-        assert_eq!(g, GenData { position: 0, gen: 0 });
-
-        let g2 = gm.next();
-        gm.next();
-        gm.next();
-        gm.drop(g2);
-        let g3 = gm.next();
-        assert_eq!(g3, GenData { gen: 1, position: 1 });
+impl<T> EcsStore<T> for VecStore<T> {
+    fn insert(&mut self, g: GenData, t: T) {
+        while g.position >= self.items.len() {
+            self.items.push(None);
+        }
+        self.items[g.position] = Some((g.gen, t));
     }
+
+    fn get(&self, g: GenData) -> Option<&T> {
+        if let Some(Some((ig, d))) = self.items.get(g.position) {
+            if *ig == g.gen { return Some(d) }
+        }
+        None
+    }
+
+    fn remove(&mut self, g: GenData) {
+        if let Some(Some((ig,_))) = self.items.get(g.position) {
+            if *ig == g.gen {
+                self.items[g.position] = None;
+            }
+        }
+    }
+
+    // WHY: While trait obligates us follow the signature, we can use mutable variant of a function?
+    fn for_each<F: FnMut(GenData, &T)>(&self, mut f: F) {
+        for (index, item) in self.items.iter().enumerate() {
+            if let Some((g, d)) = item {
+              f(GenData { gen: *g, position: index }, d)
+            }
+        }
+    }
+
+    fn for_each_mut<F: FnMut(GenData, &mut T)>(&mut self, mut f: F) {
+        for (index, item) in self.items.iter_mut().enumerate() {
+            if let Some((g, d)) = item {
+              f(GenData { gen: *g, position: index }, d)
+            }
+        }
+    }
+
+    fn get_mut(&mut self, g: GenData) -> Option<&mut T> { unimplemented!() }
 }
