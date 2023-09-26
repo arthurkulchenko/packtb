@@ -1,4 +1,4 @@
-#[derive(Copy, Clone, PartialEq)]
+#[derive(Copy, Clone, PartialEq, Debug)]
 pub struct GenData {
     position: usize,
     gen: u64
@@ -40,3 +40,14 @@ impl GenManager {
     }
 }
 
+#[cfg(test)]
+mod specs {
+    use super::*;
+
+    #[test]
+    fn items_drop() {
+        let mut gm = GenManager::new();
+        let g = gm.next();
+        assert_eq!(g, GenData { position: 0, gen: 0 })
+    }
+}
