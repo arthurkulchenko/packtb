@@ -35,6 +35,13 @@ impl<T> EcsStore<T> for VecStore<T> {
         None
     }
 
+    fn get_mut(&mut self, g: GenData) -> Option<&mut T> {
+        if let Some(Some((ig, d))) = self.items.get_mut(g.position) {
+            if *ig == g.gen { return Some(d) }
+        }
+        None
+    }
+
     fn remove(&mut self, g: GenData) {
         if let Some(Some((ig,_))) = self.items.get(g.position) {
             if *ig == g.gen {
@@ -59,8 +66,6 @@ impl<T> EcsStore<T> for VecStore<T> {
             }
         }
     }
-
-    fn get_mut(&mut self, g: GenData) -> Option<&mut T> { unimplemented!() }
 }
 
 #[cfg(test)]
