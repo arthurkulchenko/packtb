@@ -62,3 +62,27 @@ impl<T> EcsStore<T> for VecStore<T> {
 
     fn get_mut(&mut self, g: GenData) -> Option<&mut T> { unimplemented!() }
 }
+
+#[cfg(test)]
+mod specs {
+    use super::*;
+    use crate::gen::{GenData, GenManager};
+
+    #[test]
+    fn store_can_drop() {
+        let mut gm = GenManager::new();
+        let mut vs = VecStore::new();
+
+        vs.insert(gm.next(), 5);
+        vs.insert(gm.next(), 3);
+        vs.insert(gm.next(), 2);
+        let g4 = gm.next();
+
+        vs.insert(g4, 5);
+
+        vs.for_each_mut(|generation, data| *data += 2 );
+        assert_eq!(vs.get(g4), Some(&7));
+        vs.remove(g4);
+        assert_eq!(vs.get(g4), None);
+    }
+}
