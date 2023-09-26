@@ -1,4 +1,4 @@
-pub struct Strenght {
+pub struct Strength {
     pub s: i16,
     pub h: i16
 }
