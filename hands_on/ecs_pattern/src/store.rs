@@ -48,6 +48,13 @@ mod specs {
     fn items_drop() {
         let mut gm = GenManager::new();
         let g = gm.next();
-        assert_eq!(g, GenData { position: 0, gen: 0 })
+        assert_eq!(g, GenData { position: 0, gen: 0 });
+
+        let g2 = gm.next();
+        gm.next();
+        gm.next();
+        gm.drop(g2);
+        let g3 = gm.next();
+        assert_eq!(g3, GenData { gen: 1, position: 1 });
     }
 }
