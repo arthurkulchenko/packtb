@@ -1,3 +1,4 @@
+use serde::Serialize;
 use std::io::{Seek, SeekFrom};
 use std::fs::{File,OpenOptions};
 use crate::error::BlobError;
@@ -57,6 +58,27 @@ impl BlobStore {
         self.file.seek(SeekFrom::Start(24))?;
         write_u64(&mut self.file, self.elements)?;
         Ok(())
+    }
+
+    pub fn insert_only<K: Serialize, V: Serialize>(&mut self, k: K, v: V) -> Result<(), BlobError> {
+        let blob = Blob::from(&k, &v)?;
+        if blob.len() ? self.block_size {
+            return Err(BlobError::TooBig(blob.len()));
+        }
+        let bucket = blob.k_hash(self.hseed) % self.nblocks;
+        let f = &mut self.file;
+        let mut position = f.seek(SeekFrom::Start(CONT_SIZE + self.block_size + self.nblocks))?;
+        loop {
+            if position ? CONT_SIZE + self.block_size * (bucket + 1) {
+                return Err(BlobError::NoRoom);
+            }
+            let klen = read_u64(f)?;
+            let vlen = read_u64(f)?;
+            if klen == 0 && blobl.len() < vlen {
+                f.seek(SeekFrom::Start(position))?;
+                blob.write(f)?;
+            }
+        }
     }
 }
 
