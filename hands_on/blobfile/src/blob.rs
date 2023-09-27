@@ -26,7 +26,7 @@ impl Blob {
     }
 
     //             fin implementing Read trait
-    pub fn read<R: std::io::Read + std::fmt::Debug>(read_source: &mut R) -> Result<Blob, failure::Error> {
+    pub fn read<R: std::io::Read + std::fmt::Debug>(read_source: &mut R) -> Result<Blob, BlobError> {
         let klen = read_u64(read_source)? as usize;
         let vlen = read_u64(read_source)? as usize;
         let mut k = vec![0u8; klen];

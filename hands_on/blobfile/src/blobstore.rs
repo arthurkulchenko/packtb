@@ -1,4 +1,4 @@
-use serde::Serialize;
+use serde::{Serialize, Deserialize};
 use std::io::{Seek, SeekFrom};
 use std::fs::{File,OpenOptions};
 use crate::error::BlobError;
@@ -19,7 +19,7 @@ impl BlobStore {
         let hseed = rand::random::<u64>();
         let mut ff = OpenOptions::new().create_new(true).write(true).read(true).open(fname)?;
         let f = &mut ff;
-        f.set_len(CONT_SIZE + block_size * nblocks);
+        f.set_len(CONT_SIZE + block_size * nblocks)?;
         f.seek(SeekFrom::Start(0))?;
         write_u64(f, hseed)?;
         write_u64(f, block_size)?;
@@ -27,7 +27,7 @@ impl BlobStore {
         write_u64(f, 0)?;
         for x in 0..nblocks {
             f.seek(SeekFrom::Start(CONT_SIZE + x * block_size))?;
-            write_u64(f, 0);
+            write_u64(f, 0)?;
             write_u64(f, block_size - 16)?;
         }
         Ok(Self { hseed, file: ff, block_size, nblocks, elements: 0 })
@@ -60,14 +60,14 @@ impl BlobStore {
         Ok(())
     }
 
-    pub fn insert_only<K: Serialize, V: Serialize>(&mut self, k: K, v: V) -> Result<(), BlobError> {
+    fn insert_only<K: Serialize, V: Serialize>(&mut self, k: K, v: V) -> Result<(), BlobError> {
         let blob = Blob::serialize(&k, &v)?;
         if blob.length() > self.block_size {
             return Err(BlobError::TooBig(blob.length()));
         }
         let bucket = blob.k_hash(self.hseed) % self.nblocks;
         let f = &mut self.file;
-        let position = f.seek(SeekFrom::Start(CONT_SIZE + self.block_size + self.nblocks))?;
+        let mut position = f.seek(SeekFrom::Start(CONT_SIZE + self.block_size * bucket))?;
         loop {
             if position > CONT_SIZE + self.block_size * (bucket + 1) {
                 return Err(BlobError::NoRoom);
@@ -79,7 +79,32 @@ impl BlobStore {
                 blob.write(f)?;
                 write_u64(f, 0)?;
                 write_u64(f, (vlen - blob.length()) - 16)?;
+                return Ok(());
             }
+            position = f.seek(SeekFrom::Start(position + 16 + klen + vlen))?;
+        }
+    }
+
+    pub fn b_start(&self, b: u64) -> u64 {
+        CONT_SIZE + self.block_size * b
+    }
+
+    pub fn get<K: Serialize>(&mut self, k: &K) -> Result<Blob, BlobError> {
+        let s_blob = Blob::serialize(k, &0)?;
+        let bucket = s_blob.k_hash(self.hseed) % self.nblocks;
+        let b_start = self.b_start(bucket);
+        let b_end = self.b_start(bucket + 1);
+        let f = &mut self.file;
+        let mut position = f.seek(SeekFrom::Start(b_start))?;
+        loop {
+            if position >= b_end {
+                return Err(BlobError::NotFound);
+            }
+
+            let b = Blob::read(f)?;
+            if b.key_match(&s_blob) { return Ok(b) }
+
+            position += b.length();
         }
     }
 }
@@ -92,10 +117,15 @@ mod specs {
     pub fn craete_file() {
         let fs = "test_data/craete_file";
         std::fs::remove_file(fs).ok();
-        let mut bs = BlobStore::new(fs, 1000, 10).unwrap();
+        let bs = BlobStore::new(fs, 1000, 10).unwrap();
         let block_size = bs.block_size;
         let mut bs2 = BlobStore::open(fs).unwrap();
         assert_eq!(bs2.block_size, block_size);
         bs2.insert_only("fish", "so long and thanks for all teh fish").unwrap();
+        bs2.insert_only(34, "rrrrrrrrrrr thanks for all teh fish").unwrap();
+        bs2.insert_only("hello", 434).unwrap();
+        drop(bs2);
+        let mut b3 = BlobStore::open(fs).unwrap();
+        assert_eq!(b3.get(&"hello").unwrap().get_v::<u16>().unwrap(), 434);
     }
 }
