@@ -43,6 +43,10 @@ impl BlobStore {
         Ok(Self { hseed, file: ff, block_size, nblocks, elements })
     }
 
+    pub fn new_or_open(fname: &str, bsize: u64, nblocks: u64) -> Result<Self, BlobError> {
+        Self::new(fname, bsize, nblocks).or_else(|_| Self::open(fname))
+    }
+
     pub fn increment_elements(&mut self, n: i32) -> Result<(), BlobError> {
         if n > 0 {
             self.elements += n as u64;
@@ -53,5 +57,20 @@ impl BlobStore {
         self.file.seek(SeekFrom::Start(24))?;
         write_u64(&mut self.file, self.elements)?;
         Ok(())
+    }
+}
+
+#[cfg(test)]
+mod specs {
+    use super::*;
+
+    #[test]
+    pub fn craete_file() {
+        let fs = "test_data/craete_file";
+        std::fs::remove_file(fs).ok();
+        let mut bs = BlobStore::new(fs, 1000, 10).unwrap();
+        let block_size = bs.block_size;
+        let mut bs2 = BlobStore::open(fs).unwrap();
+        assert_eq!(bs2.block_size, block_size);
     }
 }
