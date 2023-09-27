@@ -163,9 +163,13 @@ mod specs {
         assert_eq!(bs2.block_size, block_size);
         bs2.insert_only("fish", "so long and thanks for all teh fish").unwrap();
         bs2.insert_only(34, "rrrrrrrrrrr thanks for all teh fish").unwrap();
+        bs2.insert_only(32, "yes").unwrap();
         bs2.insert_only("hello", 434).unwrap();
         drop(bs2);
         let mut b3 = BlobStore::open(fs).unwrap();
         assert_eq!(b3.get(&"hello").unwrap().get_v::<u16>().unwrap(), 434);
+        b3.remove(&"hello").ok();
+        assert_eq!(b3.get(&"hello").is_err(), true);
+        assert_eq!(b3.get(&32).unwrap().get_v::<String>().unwrap(), "yes".to_string());
     }
 }
