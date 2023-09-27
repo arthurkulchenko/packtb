@@ -3,7 +3,7 @@ mod hasher;
 
 use rand;
 use std::hash::Hash;
-use hasher::hash;
+pub use hasher::hash;
 use std::borrow::Borrow;
 
 const BSIZE: usize = 8;
