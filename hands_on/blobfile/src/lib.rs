@@ -1,2 +1,2 @@
-mod error;
-mod blob;
+pub mod error;
+pub mod blob;
