@@ -26,7 +26,7 @@ impl Blob {
     }
 
     //             fin implementing Read trait
-    pub fn read<R: std::io::Read + std::fmt::Debug>(read_source: &mut R) -> Result<Blob, failure::Error> {
+    pub fn read<R: std::io::Read + std::fmt::Debug>(read_source: &mut R) -> Result<Blob, BlobError> {
         let klen = read_u64(read_source)? as usize;
         let vlen = read_u64(read_source)? as usize;
         let mut k = vec![0u8; klen];
@@ -57,17 +57,17 @@ impl Blob {
         Ok(())
     }
 
-    // pub fn length(&self) -> u64 {
-    //     (16 + self.k.len() + self.v.len()) as u64
-    // }
+    pub fn length(&self) -> u64 {
+        (16 + self.k.len() + self.v.len()) as u64
+    }
 
-    // pub fn k_hash(&self, seed: u64) -> u64 {
-    //     hash::hash(seed, &self.k)
-    // }
+    pub fn k_hash(&self, seed: u64) -> u64 {
+        hash::hash(seed, &self.k)
+    }
 
-    // pub fn key_match(&self, rhs: &Self) -> bool {
-    //     self.k == rhs.k
-    // }
+    pub fn key_match(&self, rhs: &Self) -> bool {
+        self.k == rhs.k
+    }
 
     pub fn get_v<'a, V: Deserialize<'a>>(&'a self) -> Result<V, BlobError> {
         Ok(bincode::deserialize(&self.v)?)
