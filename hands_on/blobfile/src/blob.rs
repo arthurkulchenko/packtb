@@ -37,8 +37,8 @@ impl Blob {
     }
 
     pub fn write<W: std::io::Write>(&self, w: &mut W) -> Result<(), BlobError> {
-        // let k:i32 = 87;
-        // let v = "hello W";
+        // self.k:i32 = 87;
+        // self.v = "hello W";
         let klen = bincode::serialize(&self.k.len())?;
         let vlen = bincode::serialize(&self.v.len())?;
         println!(" klen: {:?}\n vlen: {:?}\n k: {:?}\n v: {:?}", klen, vlen, self.k, self.v);
