@@ -37,8 +37,8 @@ impl Blob {
     }
 
     pub fn write<W: std::io::Write>(&self, w: &mut W) -> Result<(), BlobError> {
-        // let k:i32 = 87;
-        // let v = "hello W";
+        // self.k:i32 = 87;
+        // self.v = "hello W";
         let klen = bincode::serialize(&self.k.len())?;
         let vlen = bincode::serialize(&self.v.len())?;
         println!(" klen: {:?}\n vlen: {:?}\n k: {:?}\n v: {:?}", klen, vlen, self.k, self.v);
@@ -98,7 +98,7 @@ mod specs {
         if let Some(parent) = std::path::Path::new(filename).parent() {
            std::fs::create_dir_all(parent).unwrap();
         }
-        // std::fs::remove_file(filename).ok();
+        std::fs::remove_file(filename).ok();
         let k:i32 = 87;
         let v = "hello W";
         let serialized_blob = Blob::serialize(&k, &v).unwrap();
@@ -115,7 +115,7 @@ mod specs {
         println!("res ============== {:?}", res);
 
         let p: Point<i32> = b2.get_v().unwrap();
-        assert_eq!(p, Point {x: 3, y: 0});
+        assert_eq!(p, Point {x: 7, y: 0});
     }
 
 }
