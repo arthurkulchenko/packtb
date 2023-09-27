@@ -57,17 +57,17 @@ impl Blob {
         Ok(())
     }
 
-    // pub fn length(&self) -> u64 {
-    //     (16 + self.k.len() + self.v.len()) as u64
-    // }
+    pub fn length(&self) -> u64 {
+        (16 + self.k.len() + self.v.len()) as u64
+    }
 
-    // pub fn k_hash(&self, seed: u64) -> u64 {
-    //     hash::hash(seed, &self.k)
-    // }
+    pub fn k_hash(&self, seed: u64) -> u64 {
+        hash::hash(seed, &self.k)
+    }
 
-    // pub fn key_match(&self, rhs: &Self) -> bool {
-    //     self.k == rhs.k
-    // }
+    pub fn key_match(&self, rhs: &Self) -> bool {
+        self.k == rhs.k
+    }
 
     pub fn get_v<'a, V: Deserialize<'a>>(&'a self) -> Result<V, BlobError> {
         Ok(bincode::deserialize(&self.v)?)

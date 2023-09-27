@@ -61,22 +61,24 @@ impl BlobStore {
     }
 
     pub fn insert_only<K: Serialize, V: Serialize>(&mut self, k: K, v: V) -> Result<(), BlobError> {
-        let blob = Blob::from(&k, &v)?;
-        if blob.len() ? self.block_size {
-            return Err(BlobError::TooBig(blob.len()));
+        let blob = Blob::serialize(&k, &v)?;
+        if blob.length() > self.block_size {
+            return Err(BlobError::TooBig(blob.length()));
         }
         let bucket = blob.k_hash(self.hseed) % self.nblocks;
         let f = &mut self.file;
-        let mut position = f.seek(SeekFrom::Start(CONT_SIZE + self.block_size + self.nblocks))?;
+        let position = f.seek(SeekFrom::Start(CONT_SIZE + self.block_size + self.nblocks))?;
         loop {
-            if position ? CONT_SIZE + self.block_size * (bucket + 1) {
+            if position > CONT_SIZE + self.block_size * (bucket + 1) {
                 return Err(BlobError::NoRoom);
             }
             let klen = read_u64(f)?;
             let vlen = read_u64(f)?;
-            if klen == 0 && blobl.len() < vlen {
+            if klen == 0 && blob.length() < vlen {
                 f.seek(SeekFrom::Start(position))?;
                 blob.write(f)?;
+                write_u64(f, 0)?;
+                write_u64(f, (vlen - blob.length()) - 16)?;
             }
         }
     }
@@ -94,5 +96,6 @@ mod specs {
         let block_size = bs.block_size;
         let mut bs2 = BlobStore::open(fs).unwrap();
         assert_eq!(bs2.block_size, block_size);
+        bs2.insert_only("fish", "so long and thanks for all teh fish").unwrap();
     }
 }
