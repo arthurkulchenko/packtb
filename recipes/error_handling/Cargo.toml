@@ -9,7 +9,7 @@ name = "error_handling"
 path = "src/lib.rs"
 
 [[bin]]
-name = "error_handling"
+name = "load_transactions"
 path = "src/main.rs"
 
 [dependencies]

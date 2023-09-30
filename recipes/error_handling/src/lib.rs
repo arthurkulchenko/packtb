@@ -4,7 +4,6 @@ mod error;
 
 pub use error::TransactionError;
 
-
 #[derive(Debug, Deserialize, Serialize)]
 pub struct Transaction {
     from: String,
@@ -26,19 +25,45 @@ pub struct Transaction {
     
 // }
 
-pub fn get_first_transaction(fname: &str, uname: &str) -> Option<Transaction> {
-    let transactions = get_transactions(fname).ok()?;
+pub fn get_sender_transaction(file_name: &str, sender_name: &str) -> Option<Transaction> {
+    let transactions = get_transactions(file_name).ok()?;
     for transaction in transactions {
-        if transaction.from == uname {
+        if transaction.from == sender_name {
             return Some(transaction);
         }
     }
     None
+    // let user_transactions = transactions.into_iter().filter(|transaction| transaction.from == sender_name).collect::<Vec<Transaction>>();
+    // if user_transactions.len() == 0 { return None }
+
+    // Some(user_transactions[0].clone())
 }
 
-pub fn get_transactions(fname: &str) -> Result<Vec<Transaction>, TransactionError> {
+pub fn get_transactions(file_name: &str) -> Result<Vec<Transaction>, TransactionError> {
     // std::fs::read_to_string(fname).map_err(|e| TransactionError::from(e))
     //     .and_then(|file| serde_json::from_str(&file).map_err(|e| TransactionError::from(e)))
-    Ok(serde_json::from_str(&std::fs::read_to_string(fname)?)?) // ? is shorthand for the above
 
+    // Ok(
+    //     match serde_json::from_str(
+    //         &match std::fs::read_to_string(fname) {
+    //             Ok(v) => v,
+    //             Err(e) => return Err(e.into()),
+    //         }
+    //     ) {
+    //         Ok(v) => v,
+    //         Err(e) => return Err(e.into()),
+    //     }
+    // )
+    Ok(serde_json::from_str(&std::fs::read_to_string(file_name)?)?) // ? is shorthand for the above
+
+}
+
+#[cfg(test)]
+mod specs {
+    use super::*;
+
+    #[test]
+    pub fn getting_transactions() {
+        assert_eq!(get_transactions("test_data/transactions.json").unwrap().len(), 4);
+    }
 }
