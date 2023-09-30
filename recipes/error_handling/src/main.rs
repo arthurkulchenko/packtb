@@ -1,10 +1,13 @@
 extern crate error_handling;
 use error_handling::*;
+use failure::Error;
 
-fn main() -> Result<(), TransactionError>{
+fn main() -> Result<(), Error>{
     let transactions = get_transactions("test_data/transactions.json")?;
-    println!("{:?}", transactions);
-    let first_transaction = get_sender_transaction("test_data/transactions.json", "Someone3").ok_or("No transactions")?;
-    println!("{:?}", first_transaction);
+    // println!("{:?}", transactions);
+    match get_sender_transaction(transactions, "Someone3") {
+        Ok(transaction) => println!("{:?}", transaction),
+        Err(e) => println!("{}, Backtrace = : {}", e, e.backtrace()),
+    }
     Ok(())
 }

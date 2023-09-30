@@ -25,21 +25,21 @@ pub struct Transaction {
     
 // }
 
-pub fn get_sender_transaction(file_name: &str, sender_name: &str) -> Option<Transaction> {
-    let transactions = get_transactions(file_name).ok()?;
+pub fn get_sender_transaction(transactions: Vec<Transaction>, sender_name: &str) -> Result<Transaction, failure::Error> {
+    // let transactions = get_transactions(file_name)?;
     for transaction in transactions {
         if transaction.from == sender_name {
-            return Some(transaction);
+            return Ok(transaction);
         }
     }
-    None
+    Err(TransactionError::Message("No transactions").into())
     // let user_transactions = transactions.into_iter().filter(|transaction| transaction.from == sender_name).collect::<Vec<Transaction>>();
     // if user_transactions.len() == 0 { return None }
 
     // Some(user_transactions[0].clone())
 }
 
-pub fn get_transactions(file_name: &str) -> Result<Vec<Transaction>, TransactionError> {
+pub fn get_transactions(file_name: &str) -> Result<Vec<Transaction>, failure::Error> {
     // std::fs::read_to_string(fname).map_err(|e| TransactionError::from(e))
     //     .and_then(|file| serde_json::from_str(&file).map_err(|e| TransactionError::from(e)))
 
