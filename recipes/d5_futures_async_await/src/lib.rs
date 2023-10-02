@@ -1,11 +1,13 @@
 use futures::stream::Stream;
 // use futures::stream::StreamExt;
-use futures::io::{AsyncRead};
+// use futures::io::{AsyncRead};
+use tokio::io::AsyncRead;
+use tokio::io::ReadBuf;
 use futures::task::Context;
 use futures::task::Poll;
 use std::pin::Pin;
 
-pub mod simple;
+// pub mod simple;
 
 // pub struct ReadStream<A: AsyncRead + Unpin> {
 //     reader: A,
@@ -28,12 +30,21 @@ impl <A: AsyncRead + Unpin> Stream for ReadStream<A> {
 
     fn poll_next(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Option<Self::Item>> {
         let this = self.get_mut();
-        let r = Pin::new(&mut this.reader);
-        // this.buffer.resize(100, 0);
-        match r.poll_read(cx, &mut this.buffer) {
-            Poll::Ready(Ok(len)) => {
-                let result = String::from_utf8_lossy(&this.buffer[..len]).to_string();
+        let pinned_reader = Pin::new(&mut this.reader);
+
+        let mut read_buf = ReadBuf::new(&mut this.buffer);
+        // match pinned_reader.poll_read(cx, &mut this.buffer) {
+        match pinned_reader.poll_read(cx, &mut read_buf) {
+            Poll::Ready(Ok(num_bytes_read)) => {
+
+
+                let num_bytes_read = read_buf.filled().len();
+                let result = String::from_utf8_lossy(read_buf.filled()).to_string();
                 Poll::Ready(Some(Ok(result)))
+
+
+                // let result = String::from_utf8_lossy(&this.buffer[..num_bytes_read]).to_string();
+                // Poll::Ready(Some(Ok(result)))
             }
             Poll::Ready(Err(e)) => Poll::Ready(Some(Err(e))),
             Poll::Pending => Poll::Pending,

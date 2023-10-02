@@ -15,4 +15,5 @@ path = "main.rs"
 [dependencies]
 futures = "0.3"
 tokio = { version = "1.5", features = ["full"] }
+# tokio = { version = "1", features = ["rt", "net"] }
 failure = "0.1"
