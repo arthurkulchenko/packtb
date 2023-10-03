@@ -1,35 +1,24 @@
 // WIP
-use tokio::io::AsyncWriteExt;
-use tokio::io::AsyncReadExt;
 extern crate d5_futures_async_await;
 
 use tokio::net::TcpListener;
-// use tokio::prelude::*;
+use tokio::io::AsyncWriteExt;
+use tokio::io::AsyncReadExt;
+// use tokio::io::ReadBuf;
+// use tokio::prelude::*
 
 #[tokio::main]
 async fn main() -> Result<(), failure::Error> {
-    let listener = TcpListener::bind("127.0.0.1:8092").await?;
-    // let s_future = listener.incoming().map_err(|e| eprintln!("{:?}", e)).for_each(|sock| {
-    //     let f03 = async move {
-    //         let (s_in, _s_out) = sock.split();
-    //         let mut rs = d5_futures_async_await::ReadStream::new(s_in);
-    //     };
-    //     Ok(())
-    // });
-    // tokio::run(s_future);
-    // let listener = TcpListener::bind("127.0.0.1:8080").await?;
-
+    let addr: std::net::SocketAddr = "127.0.0.1:8092".parse()?;
+    let listener = TcpListener::bind(&addr).await?;
     loop {
-        let (mut socket, _) = listener.accept().await?;
-        let mut rs = d5_futures_async_await::ReadStream::new(socket);
+        let (mut rw_socket, _socket_addr) = listener.accept().await?;
+        // let mut rs = d5_futures_async_await::ReadStream::new(rw_socket);
         tokio::spawn(async move {
             let mut buf = [0; 1024];
-
-            // In a loop, read data from the socket and write the data back.
             loop {
-                // let n = match socket.read(&mut buf).await {
-                let n = match socket.read(&mut buf).await {
-                    // socket closed
+                // let n = match rw_socket.read(&mut rs).await {
+                let n = match rw_socket.read(&mut buf).await {
                     Ok(n) if n == 0 => return,
                     Ok(n) => n,
                     Err(e) => {
@@ -37,9 +26,8 @@ async fn main() -> Result<(), failure::Error> {
                         return;
                     }
                 };
-
                 // Write the data back
-                if let Err(e) = socket.write_all(&buf[0..n]).await {
+                if let Err(e) = rw_socket.write_all(&buf[0..n]).await {
                     eprintln!("failed to write to socket; err = {:?}", e);
                     return;
                 }
