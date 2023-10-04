@@ -37,7 +37,11 @@ impl Handler for Controller {
             HttpMethods::GET => match request.path() {
                 "/" => Response::new(200, "OK".to_string(), self.read_file("index.html")),
                 "/info" => Response::new(200, "OK".to_string(), self.read_file("info.html")),
-                "/main.css" => Response::new(200, "OK".to_string(), self.read_file("main.css")),
+                // "/main.css" => Response::new(200, "OK".to_string(), self.read_file("main.css")),
+                path => match self.read_file(path) {
+                    Some(content) => Response::new(200, "OK".to_string(), Some(content)),
+                    None => Response::new(404, "Not Found".to_string(), None),
+                },
                 _ => Response::new(200, "OK".to_string(), self.read_file("index.html")),
             },
             _ => Response::new(404, "Not Found".to_string(), None),
