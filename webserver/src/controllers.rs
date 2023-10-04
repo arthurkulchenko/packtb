@@ -1,7 +1,15 @@
 use super::server::Handler;
 use super::http::{Request, Response, HttpMethods};
 
-pub struct Controller;
+pub struct Controller {
+    public_path: String
+}
+
+impl Controller {
+    pub fn new(public_path: String) -> Self {
+        Self { public_path }
+    }
+}
 
 impl Handler for Controller {
     fn handle_request(&mut self, request: &Request) -> Response {
@@ -17,6 +25,7 @@ impl Handler for Controller {
         let body = r#"
             <html>
                 <head>
+                    <link href="/main.css" rel="stylesheet">
                     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
                 </head>
                 <body>
@@ -33,6 +42,10 @@ impl Handler for Controller {
         match request.method() {
             HttpMethods::GET => match request.path() {
                 "/" => okr_resp,
+                "/main.css" => {
+                    let statics = std::fs::read_to_string(format!("{}/main.css", &self.public_path)).unwrap();
+                    Response::new(200, "OK".to_string(), Some(statics.to_string()))
+                },
                 _ => okr_resp,
             },
             _ => Response::new(404, "Not Found".to_string(), None),
