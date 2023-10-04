@@ -1,9 +1,15 @@
 use crate::Request;
 use crate::Response;
+use std::string::ParseError;
 
 use std::net::TcpListener;
 use std::io::{Read, Write};
 // use std::convert::TryFrom;
+
+pub trait Handler {
+    fn handle_request(&mut self, request: &Request) -> Response;
+    fn handle_bad_request(&mut self, parse_error: &ParseError) -> Response;
+}
 
 pub struct Server {
     host: String,
@@ -19,7 +25,7 @@ impl Server {
         Self { host: host.to_string(), port: port.to_string() }
     }
 
-    pub fn run(self) {
+    pub fn run(self, mut handler: impl Handler) {
         let listener = TcpListener::bind(format!("{}:{}", &self.host, &self.port)).unwrap();
         println!("Server started on {}:{}", self.host, self.port);
         'server_runtime: loop {
