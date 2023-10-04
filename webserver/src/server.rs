@@ -1,14 +1,18 @@
 use crate::Request;
 use crate::Response;
+
 use std::string::ParseError;
 
 use std::net::TcpListener;
-use std::io::{Read, Write};
+use std::io::{Read};
 // use std::convert::TryFrom;
 
 pub trait Handler {
     fn handle_request(&mut self, request: &Request) -> Response;
-    fn handle_bad_request(&mut self, parse_error: &ParseError) -> Response;
+    fn handle_bad_request(&mut self, parse_error: &ParseError) -> Response {
+        println!("Failed parse request: {}", parse_error);
+        Response::new(400, "Bad Request".to_string(), None)
+    }
 }
 
 pub struct Server {
@@ -33,39 +37,18 @@ impl Server {
                 Ok((mut stream, _address)) => {
                     let buffer = &mut [0; 1024];
 
-                    let response = match stream.read(buffer) {
+                    match stream.read(buffer) {
                         Ok(_req) => {
-                            let result = Request::try_from(&buffer[..]);
-                            // if let Err(_message) = result {
-                            //     println!("{}", "error message");
-                            //     return; // Response::new(400, "Bad Request".to_string(), None).send_to(&mut stream)
-                            // }
-                            result.unwrap();
-                            let body = r#"
-                                <html>
-                                    <head>
-                                        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
-                                    </head>
-                                    <body>
-                                        <h1>This is it!</h1>
-                                    </body>
-                                </html>
-                            "#.to_string();
-                            Response::new(200, "OK".to_string(), Some(body))
-                            // Response::new(code: 200, status: "OK".to_string(), body: Some(body), stream));
-                            // match write!(stream, "HTTP/1.1 400 Not Found\r\n\r\n") {
-                            //     Ok(_) => println!("{}", "body"),
-                            //     Err(e) => println!("{}", e)
-                            // }
+                            let response = match Request::try_from(&buffer[..]) {
+                                Ok(request) => handler.handle_request(&request),
+                                Err(parse_error) => handler.handle_bad_request(&parse_error)
+                            };
+                            if let Err(error) = response.send_to(&mut stream) {
+                               println!("{}", error);
+                            }
                         },
-                        Err(error) => {
-                            println!("Error: {}", error);
-                            Response::new(400, "Bad Request".to_string(), None)
-                        }
+                        Err(error) => println!("{}", error)
                     };
-                    if let Err(error) = response.send_to(&mut stream) {
-                        println!("{}", error);
-                    }
                 },
                 Err(error) => println!("{}", error)
             }
