@@ -10,7 +10,7 @@ path = "src/lib.rs"
 
 [[bin]]
 name = "d5_futures_async_await_server"
-path = "main.rs"
+path = "src/main.rs"
 
 [dependencies]
 futures = "0.3"

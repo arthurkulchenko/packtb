@@ -10,6 +10,8 @@ use tokio::io::AsyncReadExt;
 #[tokio::main]
 async fn main() -> Result<(), failure::Error> {
     let addr: std::net::SocketAddr = "127.0.0.1:8092".parse()?;
+    // println!("Listening on: {}", addr);
+    print!("Listening on: {}", addr);
     let listener = TcpListener::bind(&addr).await?;
     loop {
         let (mut rw_socket, _socket_addr) = listener.accept().await?;

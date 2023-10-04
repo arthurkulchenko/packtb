@@ -27,26 +27,38 @@ impl Server {
                 Ok((mut stream, _address)) => {
                     let buffer = &mut [0; 1024];
 
-                    match stream.read(buffer) {
-
+                    let response = match stream.read(buffer) {
                         Ok(_req) => {
                             let result = Request::try_from(&buffer[..]);
-                            // println!("{:?}", result);
-                            if let Err(_message) = result {
-                                println!("{}", "error message");
-                                return
-                            }
-
+                            // if let Err(_message) = result {
+                            //     println!("{}", "error message");
+                            //     return; // Response::new(400, "Bad Request".to_string(), None).send_to(&mut stream)
+                            // }
                             result.unwrap();
-                            let _response = Response { code: 200, status: "OK".to_string(), body: None };
-                            let resp = "HTTP/1.1 200 OK\r\n\r\nHello".to_string();
-                            write!(stream, "{}", resp);
+                            let body = r#"
+                                <html>
+                                    <head>
+                                        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+                                    </head>
+                                    <body>
+                                        <h1>This is it!</h1>
+                                    </body>
+                                </html>
+                            "#.to_string();
+                            Response::new(200, "OK".to_string(), Some(body))
+                            // Response::new(code: 200, status: "OK".to_string(), body: Some(body), stream));
                             // match write!(stream, "HTTP/1.1 400 Not Found\r\n\r\n") {
-                            //     Ok(_) => println!("{}", "resp"),
+                            //     Ok(_) => println!("{}", "body"),
                             //     Err(e) => println!("{}", e)
                             // }
                         },
-                        Err(error) => println!("{}", error)
+                        Err(error) => {
+                            println!("Error: {}", error);
+                            Response::new(400, "Bad Request".to_string(), None)
+                        }
+                    };
+                    if let Err(error) = response.send_to(&mut stream) {
+                        println!("{}", error);
                     }
                 },
                 Err(error) => println!("{}", error)
