@@ -1,7 +1,4 @@
-use crate::Request;
-use crate::Response;
-
-use std::string::ParseError;
+use crate::http::*;
 
 use std::net::TcpListener;
 use std::io::{Read};
@@ -10,6 +7,7 @@ use std::io::{Read};
 pub trait Handler {
     fn handle_request(&mut self, request: &Request) -> Response;
     fn handle_bad_request(&mut self, parse_error: &ParseError) -> Response {
+    // fn handle_bad_request(&mut self, parse_error: &String) -> Response {
         println!("Failed parse request: {}", parse_error);
         Response::new(400, "Bad Request".to_string(), None)
     }
