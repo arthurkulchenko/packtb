@@ -1,57 +1,62 @@
-// use std::str::Utf8Error;
+use std::str::FromStr;
+use std::str::Utf8Error;
 use std::collections::HashMap;
-use crate::HttpMethods;
 use std::convert::TryFrom;
 // use std::error::Error;
-// use std::fmt::{Display, Formatter, Debug};
+use std::fmt::{Display, Formatter, Debug};
+
+use crate::HttpMethods;
 
 // ========================================================== ERROR
-// pub enum ParseError {
-//     InvalidRequest,
-//     InvalidEncoding,
-//     InvalidProtocol,
-//     InvalidMethod,
-// }
+pub enum ParseError {
+    InvalidRequest,
+    InvalidEncoding,
+    InvalidProtocol,
+    InvalidMethod,
+}
 
-// impl ParseError {
-//     fn message(&self) -> &str {
-//         match self {
-//             Self::InvalidRequest => "Invalid Request",
-//             Self::InvalidEncoding => "Invalid Encoding",
-//             Self::InvalidProtocol => "Invalid Protocol",
-//             Self::InvalidMethod => "Invalid Method",
-//         }
-//     }
-// }
+impl ParseError {
+    fn message(&self) -> &str {
+        match self {
+            Self::InvalidRequest => "Invalid Request",
+            Self::InvalidEncoding => "Invalid Encoding",
+            Self::InvalidProtocol => "Invalid Protocol",
+            Self::InvalidMethod => "Invalid Method",
+        }
+    }
+}
 
-// impl Display for ParseError {
-//     fn fmt(&self, f: &mut Formatter) -> std::fmt::Result {
-//         write!(f, "{}", self.message())
-//     }
-// }
+impl Display for ParseError {
+    fn fmt(&self, f: &mut Formatter) -> std::fmt::Result {
+        write!(f, "{}", self.message())
+    }
+}
 
-// impl Debug for ParseError {
-//     fn fmt(&self, f: &mut Formatter) -> std::fmt::Result {
-//         write!(f, "{}", self.message())
-//     }
-// }
+impl Debug for ParseError {
+    fn fmt(&self, f: &mut Formatter) -> std::fmt::Result {
+        write!(f, "{}", self.message())
+    }
+}
 
-// impl From<Utf8Error> for ParseError {
-//     fn from(_: Utf8Error) -> Self {
-//         Self::InvalidEncoding
-//     }
-// }
+impl From<Utf8Error> for ParseError {
+    fn from(_: Utf8Error) -> Self {
+        Self::InvalidEncoding
+    }
+}
 
 // impl Error for ParseError {}
 // ========================================================== ERROR
 
 #[derive(Debug)]
 pub struct Request {
-    method: HttpMethods,
-    path: String,
+    pub method: HttpMethods,
+    pub path: String,
+    // path: &'b str,
     // query: Option<String>,
-    query: Option<HashMap<String, String>>,
+    pub query: Option<HashMap<String, String>>,
 }
+
+type RequestQuery = HashMap<String, String>;
 
 impl Request {
     // pub fn from_byte_array(buffer: &[u8]) -> Self {
@@ -67,11 +72,23 @@ impl Request {
     //     let request = str::from_utf8(buffer)?;
     //     unimplemented!()
     // }
+    pub fn method(&self) -> &HttpMethods {
+        &self.method
+    }
+
+    pub fn path(&self) -> &str {
+        &self.path[..]
+    }
+
+    // NOTICE: as_ref makes &Option<RequestQuery> to Option<&RequestQuery>
+    pub fn query(&self) -> Option<&RequestQuery> {
+        self.query.as_ref()
+    }
 }
 
 impl TryFrom<&[u8]> for Request {
-    // type Error = ParseError;
-    type Error = String;
+    type Error = ParseError;
+    // type Error = String;
 
     fn try_from(value: &[u8]) -> Result<Self, Self::Error> {
         let buffer_read = String::from_utf8_lossy(value);
@@ -84,22 +101,18 @@ impl TryFrom<&[u8]> for Request {
 
         let (p, q) = match path_query_len {
             2 => {
-                // let qq = path_query[1].to_string()
                 let key_value_pairs = path_query[1].split("&").collect::<Vec<_>>();
                 let mut qq = HashMap::new();
                 for key_value in key_value_pairs {
                     let key_value_array = key_value.split("=").collect::<Vec<_>>();
                     qq.insert(key_value_array[0].to_string(), key_value_array[1].to_string());
                 }
-                (path_query[0].to_string(), Some(qq))
+                (path_query[0], Some(qq))
             },
-            _ => { (path_query[0].to_string(), None) }
+            _ => { (path_query[0], None) }
         };
-        // let (p, q) = (path_query[0], path_query[1]);
-        // let http_method = HttpMethods::from_str(method);
-        let http_method = method.parse()?;
-        // let selfy = Self { method: HttpMethods::GET, path: p.to_string(), query: Some(q.to_string()) };
-        let selfy = Self { method: http_method, path: p, query: q };
+        let http_method = HttpMethods::from_str(method)?;
+        let selfy = Self { method: http_method, path: p.to_string(), query: q };
         Ok(selfy)
     }
 }

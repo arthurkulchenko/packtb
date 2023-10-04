@@ -1,24 +1,20 @@
 use std::io::Write;
 use std::fmt::{Display, Formatter, Result as FmtResult};
-use std::net::TcpStream;
-
-// use super::StatusCode;
 
 #[derive(Debug)]
 pub struct Response {
-    // pub status_code: StatusCode,
     pub code: u16,
     pub status: String,
     pub body: Option<String>
 }
 
 impl Response {
-    // pub fn new(code: u16, status: StatusCode, body: Option<String>) -> Self {
     pub fn new(code: u16, status: String, body: Option<String>) -> Self {
         Response { code, status, body }
     }
 
-    pub fn send_to(&self, stream: &mut TcpStream) -> std::io::Result<()> {
+    // pub fn send_to<T: Write>(&self, stream: &mut T) -> std::io::Result<()> {
+    pub fn send_to(&self, stream: &mut impl Write) -> std::io::Result<()> {
         write!(stream, "{}", self)
     }
 }

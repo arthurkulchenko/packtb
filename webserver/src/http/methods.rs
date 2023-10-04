@@ -1,5 +1,5 @@
-
 use std::str::FromStr;
+use super::request::ParseError;
 
 #[derive(Debug)]
 pub enum HttpMethods {
@@ -15,7 +15,8 @@ pub enum HttpMethods {
 }
 
 impl FromStr for HttpMethods {
-    type Err = String;
+    // type Err = String;
+    type Err = ParseError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
@@ -28,7 +29,8 @@ impl FromStr for HttpMethods {
             "HEAD" => Ok(Self::HEAD),
             "CONNECT" => Ok(Self::CONNECT),
             "TRACE" => Ok(Self::TRACE),
-            _ => Err("No such method".to_string())
+            // _ => Err("No such method".to_string())
+            _ => Err(ParseError::InvalidMethod)
         }
     }
 }
