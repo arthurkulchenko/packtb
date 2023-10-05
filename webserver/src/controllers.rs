@@ -14,6 +14,7 @@ impl Controller {
         let path = format!("{}/{}", self.public_path, path.to_string());
         match std::fs::canonicalize(path) {
             Ok(path) => {
+                // path - of PathBuf type
                 if path.starts_with(&self.public_path) {
                     std::fs::read_to_string(path).ok()
                 } else {
