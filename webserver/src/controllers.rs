@@ -11,7 +11,18 @@ impl Controller {
     }
 
     fn read_file(&self, path: &str) -> Option<String> {
-        std::fs::read_to_string(format!("{}/{}", self.public_path, path)).ok()
+        let path = format!("{}/{}", self.public_path, path.to_string());
+        match std::fs::canonicalize(path) {
+            Ok(path) => {
+                if path.starts_with(&self.public_path) {
+                    std::fs::read_to_string(path).ok()
+                } else {
+                    println!("Directory traversal attack attempt: {}", path.display());
+                    None
+                }
+            },
+            Err(_) => None,
+        }
     }
 
 }
@@ -20,7 +31,23 @@ impl Handler for Controller {
     fn handle_request(&mut self, request: &Request) -> Response {
         println!("Request: {:?}", request);
 
-        // Response::new(200, "OK".to_string(), Some("handler 1".to_string()))
+        match request.method() {
+            HttpMethods::GET => match request.path() {
+                "/" => Response::new(200, "OK".to_string(), self.read_file("index.html")),
+                "/info" => Response::new(200, "OK".to_string(), self.read_file("info.html")),
+
+                path => match self.read_file(path) {
+                    Some(content) => Response::new(200, "OK".to_string(), Some(content)),
+                    None => Response::new(404, "Not Found".to_string(), None),
+                },
+
+            },
+            _ => Response::new(404, "Not Found".to_string(), None),
+        }
+    }
+}
+
+// Response::new(200, "OK".to_string(), Some("handler 1".to_string()))
         // let result = Request::try_from(&buffer[..]);
         // if let Err(_message) = result {
         //     println!("{}", "error message");
@@ -33,18 +60,3 @@ impl Handler for Controller {
         //     Ok(_) => println!("{}", "body"),
         //     Err(e) => println!("{}", e)
         // }
-        match request.method() {
-            HttpMethods::GET => match request.path() {
-                "/" => Response::new(200, "OK".to_string(), self.read_file("index.html")),
-                "/info" => Response::new(200, "OK".to_string(), self.read_file("info.html")),
-                // "/main.css" => Response::new(200, "OK".to_string(), self.read_file("main.css")),
-                path => match self.read_file(path) {
-                    Some(content) => Response::new(200, "OK".to_string(), Some(content)),
-                    None => Response::new(404, "Not Found".to_string(), None),
-                },
-                _ => Response::new(200, "OK".to_string(), self.read_file("index.html")),
-            },
-            _ => Response::new(404, "Not Found".to_string(), None),
-        }
-    }
-}
