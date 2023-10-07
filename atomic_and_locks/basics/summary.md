@@ -1,0 +1,12 @@
+- static variables still can be used by spawnd threads even if main program exits
+- println! macro use Stdout::lock
+- thread could be build using thread::Builder::new
+- threads could be scoped that way we can be sure than threds won't outlive certian scope
+- when the scope ends, all threads that haven't joined yet are automatically joined
+- static value do not belong to any thread, they are owned by program, static item has a constant initializer and is never droped and already exists before the main.
+- Box::leak() is used make variable outlive the scope it get created in
+- Reference Counting - Arc - smart pointer make sure that the value is not dropped until all references to it are gone - they share ownership
+- It is better to shadow Arc variable name inside thread semantic scope
+- Rc and Arc - *mutates* the reference count atomically which is a part of a type
+- Cell<T: Copy> allow mutation through a shared reference. it only allow to copy value out(if T is Copy) or swap whole value out works only in single thread
+- RefCell<T> - holds T but also holds a counter. can't be mutable borrowed if already borrowed immutably. works only in single thread.
