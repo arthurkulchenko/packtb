@@ -10,10 +10,6 @@ use image::ColorType;
 use image::codecs::png::PngEncoder;
 use std::fs::File;
 
-// struct Complex<T> {
-//     real: T,
-//     imaginary: T,
-// }
 // TODO: Refresh complex plain
 
 fn main() {
@@ -88,12 +84,10 @@ fn render(pixels: &mut [u8], bounds: (usize, usize), upper_left: Complex<f64>, l
 fn write_to_image(filename: &str, pixels: &[u8], bounds: (usize, usize)) -> Result<(), std::io::Error> {
     let output = File::create(filename)?;
     let encoder = PngEncoder::new(output);
-    // encoder.encode(pixels, bounds.0 as u32, bounds.1 as u32, ColorType::Rgb8(8))?;
     let width = bounds.0 as u32;
     let height = bounds.1 as u32;
-    // encoder.write_image(pixels, width, height, ColorType::Rgb8)?;
-    // encoder.write_image(pixels, width, height, ColorType::Rgb8)?.map_err(|e| Error::new(ErrorKind::Other, format!("PNG Encoding Error: {:?}", err)));
-    encoder.write_image(pixels, width, height, ColorType::Rgb8).map_err(|e| std::io::Error::new(std::io::ErrorKind::InvalidData, e.to_string()));
+    let _ = encoder.write_image(pixels, width, height, ColorType::L8)
+                   .map_err(|e| std::io::Error::new(std::io::ErrorKind::InvalidData, e.to_string()));
     Ok(())
 }
 
