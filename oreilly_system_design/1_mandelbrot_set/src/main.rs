@@ -1,15 +1,17 @@
+use crossbeam::thread::Scope;
+use crossbeam;
+use image::codecs::png::PngEncoder;
+use image::ColorType;
 use image::ImageEncoder;
-use std::str::FromStr;
 use num::Complex;
 use std::env;
-use image::ColorType;
-use image::codecs::png::PngEncoder;
 use std::fs::File;
-use crossbeam;
+use std::str::FromStr;
 
 // TODO: Refresh complex plain
 
 fn main() {
+    let cpus = num_cpus::get_physical();
     let args: Vec<String> = env::args().collect();
     if args.len() != 5 {
         eprintln!("Usage: {} <file> <dimentions> <upper_left> <lower_right>", args[0]);
@@ -21,7 +23,7 @@ fn main() {
     let upper_left: Complex<f64> = parse_complex(&args[3]).expect("error parsing upper left corner point");
     let lower_right: Complex<f64> = parse_complex(&args[4]).expect("error parsing lower right corner point");
     let mut pixels = vec![0; bounds.0 * bounds.1];
-    render(&mut pixels, bounds, upper_left, lower_right);
+    render(&mut pixels, bounds, upper_left, lower_right, cpus);
     write_to_image(&args[1], &pixels, bounds).expect("error writting to PNG file");
 }
 
@@ -53,39 +55,38 @@ pub fn parse_complex(range: &str) -> Option<Complex<f64>> {
     }
 }
 
-fn escape_time(complex: Complex<f64>, limit: usize) -> Option<usize> {
-    let mut z = Complex { re: 0.0, im: 0.0 };
-    for i in 0..limit {
-        if z.norm_sqr() > 4.0 {
-            return Some(i)
-        }
-        z = z * z + complex;
-    }
+fn render<'env>(pixels: &'env mut [u8], bounds: (usize, usize), upper_left: Complex<f64>, lower_right: Complex<f64>, cpus: usize) {
+    let rows_per_band = bounds.1 / cpus + 1;
 
-    None
-}
-
-fn render(pixels: &mut [u8], bounds: (usize, usize), upper_left: Complex<f64>, lower_right: Complex<f64>) {
-    let threads = 8;
-    let rows_per_band = bounds.1 / threads + 1;
     {
         let bands: Vec<&mut [u8]> = pixels.chunks_mut(rows_per_band * bounds.0).collect();
-        crossbeam::scope(|spawner| {
+        let single_render = |scope: &Scope<'env>| {
             for (i, band) in bands.into_iter().enumerate() {
-                let top = rows_per_band * i;
-                let height = band.len() / bounds.0;
-                let band_bounds = (bounds.0, height);
-                let band_upper_left = pixel_to_point(bounds, (0, top), upper_left, lower_right);
-                let band_lower_right = pixel_to_point(bounds, (bounds.0, top + height), upper_left, lower_right);
-                spawner.spawn(move |_| {
-                    _render_single(band, band_bounds, band_upper_left, band_lower_right);
-                });
+                let top: usize = rows_per_band * i;
+                let height: usize = band.len() / bounds.0;
+                let band_bounds: (usize, usize) = (bounds.0, height);
+                let band_upper_left: Complex<f64> = pixel_to_point(bounds, (0, top), upper_left, lower_right);
+                let band_lower_right: Complex<f64> = pixel_to_point(bounds, (bounds.0, top + height), upper_left, lower_right);
+
+                scope.spawn(move |_| { render_single(band, band_bounds, band_upper_left, band_lower_right); });
             }
-        }).unwrap();
+        };
+
+        crossbeam::scope(single_render).unwrap();
     }
 }
 
-fn _render_single(pixels: &mut [u8], bounds: (usize, usize), upper_left: Complex<f64>, lower_right: Complex<f64>) {
+fn write_to_image(filename: &str, pixels: &[u8], bounds: (usize, usize)) -> Result<(), std::io::Error> {
+    let output = File::create(filename)?;
+    let encoder = PngEncoder::new(output);
+    let width = bounds.0 as u32;
+    let height = bounds.1 as u32;
+    let _ = encoder.write_image(pixels, width, height, ColorType::L8)
+                   .map_err(|e| std::io::Error::new(std::io::ErrorKind::InvalidData, e.to_string()));
+    Ok(())
+}
+
+fn render_single(pixels: &mut [u8], bounds: (usize, usize), upper_left: Complex<f64>, lower_right: Complex<f64>) {
     assert_eq!(pixels.len(), bounds.0 * bounds.1);
     for row in 0..bounds.1 {
         for column in 0..bounds.0 {
@@ -98,14 +99,16 @@ fn _render_single(pixels: &mut [u8], bounds: (usize, usize), upper_left: Complex
     }
 }
 
-fn write_to_image(filename: &str, pixels: &[u8], bounds: (usize, usize)) -> Result<(), std::io::Error> {
-    let output = File::create(filename)?;
-    let encoder = PngEncoder::new(output);
-    let width = bounds.0 as u32;
-    let height = bounds.1 as u32;
-    let _ = encoder.write_image(pixels, width, height, ColorType::L8)
-                   .map_err(|e| std::io::Error::new(std::io::ErrorKind::InvalidData, e.to_string()));
-    Ok(())
+fn escape_time(complex: Complex<f64>, limit: usize) -> Option<usize> {
+    let mut z = Complex { re: 0.0, im: 0.0 };
+    for i in 0..limit {
+        if z.norm_sqr() > 4.0 {
+            return Some(i)
+        }
+        z = z * z + complex;
+    }
+
+    None
 }
 
 fn pixel_to_point(bounds: (usize, usize), pixel: (usize, usize), upper_left: Complex<f64>, lower_right: Complex<f64>) -> Complex<f64> {
