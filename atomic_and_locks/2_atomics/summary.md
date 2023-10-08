@@ -7,3 +7,4 @@
   - SeqCst - all operations are visible to other threads in the order they were performed
   - Consume - only subsequent reads that depend on the current value are visible to other threads
 - Atomic operations: load and store (store takes shared reference of self, but it actually modify)
+- thread scope joins all threads on drop

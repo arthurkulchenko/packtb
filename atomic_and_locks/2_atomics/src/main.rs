@@ -24,6 +24,6 @@ fn main() {
 }
 
 fn some_work() {
-    let _ = std::thread::sleep(std::time::Duration::from_secs(6));
+    let _ = std::thread::sleep(std::time::Duration::from_secs(1));
     println!("working...");
 }
