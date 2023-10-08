@@ -14,6 +14,10 @@ name = "lazy_initialization"
 path = "src/lazy.rs"
 
 [[bin]]
+name = "fetchnmod"
+path = "src/fetchnmod.rs"
+
+[[bin]]
 name = "atomics_main"
 path = "src/main.rs"
 
