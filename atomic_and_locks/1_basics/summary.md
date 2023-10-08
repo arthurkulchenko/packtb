@@ -10,3 +10,13 @@
 - Rc and Arc - *mutates* the reference count atomically which is a part of a type
 - Cell<T: Copy> allow mutation through a shared reference. it only allow to copy value out(if T is Copy) or swap whole value out works only in single thread
 - RefCell<T> - holds T but also holds a counter. can't be mutable borrowed if already borrowed immutably. works only in single thread.
+- RwLock is concurrent version of a RefCell instead of panicing when another pointer wants to mutate the value, it will block(puts in a sleep) the thread until the lock is released.
+- Mutex instead of tracking the number of shared and exclusive references, allows only exclusive.
+- Atomics type represents the concurrent version of a Cell.
+- UnsafeCell has get() method which returns a raw pointer
+- Send type can be sent to another thread - ownership is transfered
+- Sync type can be shared with another thread. All primitives types are Send and Sync.
+- PhantomData<T> can serve as an constrain to a type making it Send with a T that is not Sync.
+- Lock Poisoning - when a Mutex is pamics while locked/
+- Parking thread::park will put thread to sleep until it is woken up by t.thread().unpark() where t parked thread.
+- Condvar use wait(lock) method to put thread to sleep and notify_one() or notify_all() to wake up the thread.

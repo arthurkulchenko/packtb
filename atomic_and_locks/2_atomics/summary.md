@@ -1,0 +1,9 @@
+- Atomics operations are the main building block for anything involvong multiple threads. Mutex and Condvar implemented using it. Atomics operation are available as methods on the standard atomics types std::sync::atomic like AtomicI32 or AtomicUsize.
+- Memory ordering - is a mode of operation of atomics. It defines how the atomic operation interacts with other threads. There are 6 memory ordering modes:
+  - Relaxed - no ordering guarantees
+  - Release - all previous writes are visible to other threads
+  - Acquire - all subsequent reads are visible to other threads
+  - AcqRel - both Release and Acquire
+  - SeqCst - all operations are visible to other threads in the order they were performed
+  - Consume - only subsequent reads that depend on the current value are visible to other threads
+- Atomic operations: load and store (store takes shared reference of self, but it actually modify)
