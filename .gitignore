@@ -3,6 +3,8 @@
 tmp
 */target/debug
 */*/target/debug
+*/*/target/release
+*/target/release
 */target/doc
 */*/target/doc
 */Cargo.lock
