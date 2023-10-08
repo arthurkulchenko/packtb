@@ -1,7 +1,3 @@
-// use image::png::PNGEncoder;
-
-// use std::io::ErrorKind;
-// use std::error::Error;
 use image::ImageEncoder;
 use std::str::FromStr;
 use num::Complex;
@@ -9,6 +5,7 @@ use std::env;
 use image::ColorType;
 use image::codecs::png::PngEncoder;
 use std::fs::File;
+use crossbeam;
 
 // TODO: Refresh complex plain
 
@@ -69,6 +66,26 @@ fn escape_time(complex: Complex<f64>, limit: usize) -> Option<usize> {
 }
 
 fn render(pixels: &mut [u8], bounds: (usize, usize), upper_left: Complex<f64>, lower_right: Complex<f64>) {
+    let threads = 8;
+    let rows_per_band = bounds.1 / threads + 1;
+    {
+        let bands: Vec<&mut [u8]> = pixels.chunks_mut(rows_per_band * bounds.0).collect();
+        crossbeam::scope(|spawner| {
+            for (i, band) in bands.into_iter().enumerate() {
+                let top = rows_per_band * i;
+                let height = band.len() / bounds.0;
+                let band_bounds = (bounds.0, height);
+                let band_upper_left = pixel_to_point(bounds, (0, top), upper_left, lower_right);
+                let band_lower_right = pixel_to_point(bounds, (bounds.0, top + height), upper_left, lower_right);
+                spawner.spawn(move |_| {
+                    _render_single(band, band_bounds, band_upper_left, band_lower_right);
+                });
+            }
+        }).unwrap();
+    }
+}
+
+fn _render_single(pixels: &mut [u8], bounds: (usize, usize), upper_left: Complex<f64>, lower_right: Complex<f64>) {
     assert_eq!(pixels.len(), bounds.0 * bounds.1);
     for row in 0..bounds.1 {
         for column in 0..bounds.0 {
