@@ -22,6 +22,10 @@ name = "progress_report_multithread"
 path = "src/progress_report_multithread.rs"
 
 [[bin]]
+name = "statistics"
+path = "src/statistics.rs"
+
+[[bin]]
 name = "atomics_main"
 path = "src/main.rs"
 

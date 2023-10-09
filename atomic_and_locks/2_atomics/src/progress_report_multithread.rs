@@ -12,6 +12,7 @@ fn main() {
     let amount_to_split = 100;
     let chunk_size = amount_to_split / cpus;
 
+    // split array onto ranges and then make it consumed by threads
     for t in 0..cpus {
         let spawned_thread = std::thread::spawn(move || {
             let start = chunk_size * t;
