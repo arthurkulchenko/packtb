@@ -26,6 +26,10 @@ name = "statistics"
 path = "src/statistics.rs"
 
 [[bin]]
+name = "id_allocation"
+path = "src/id_allocation.rs"
+
+[[bin]]
 name = "atomics_main"
 path = "src/main.rs"
 
