@@ -9,4 +9,5 @@
 - Atomic operations: load and store (store takes shared reference of self, but it actually modify)
 - thread scope joins all threads on drop
 - Using lazy initialization of static Atomic variable with more then 1 thread could cause a race. Could be solved by std::sync::Once or OnceLock
-- fetch_* - atomic operations that return old value, but not always the same as load, so it is unreliable. fetch_add and fetch_sub won't panic on overflow, instead return max or min.
+- fetch_* - atomic operations that return old value, but not always the same as load, so it is unreliable. fetch_add and fetch_sub won't panic on overflow, instead flips to beginning or the end.
+- working with Atomics could safe some bits of time on synchronization, but it is not always the case. Use Mutex if need synchronization of the data in price of some time.
