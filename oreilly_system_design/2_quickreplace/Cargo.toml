@@ -2,8 +2,17 @@
 name = "quickreplace"
 version = "0.1.0"
 edition = "2021"
+default-run = "quickreplace"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[[bin]]
+name = "read_write_files"
+path = "src/read_write_files.rs"
+
+[[bin]]
+name = "quickreplace"
+path = "src/main.rs"
 
 [dependencies]
 text-colorizer = "1"
