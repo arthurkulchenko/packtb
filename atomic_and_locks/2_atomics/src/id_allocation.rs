@@ -15,6 +15,8 @@ fn allocate_new_id_without_overflow() -> u32 {
             Ok(_) => return id,
             Err(v) => id = v,
         }
+        // NOTICE: As an alternative could use #fetch_update()
+        // NEXT_ID.fetch_update(Relaxed, Relaxed, |n| n.checked_add(1)).expect("too many ids");
     }
 }
 
