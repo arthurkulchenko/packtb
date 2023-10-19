@@ -1,3 +1,5 @@
+// Garbage implementation of skip lists
+
 use std::cell::RefCell;
 use std::rc::Rc;
 use rand;
@@ -23,38 +25,41 @@ impl SkipList {
         SkipList { head: None, tails: vec![None], length: 0, height: 0 }
     }
 
-    pub fn get_level() -> usize {
+    // NOTICE: No propbalistic distribution across levels
+    fn get_level() -> usize {
+        if self.head.is_none() { return self.height + 1 }
+        if self.height <= 0 { return 1; }
+
         let mut n = 0;
-        while rand::random::<bool>() && n < self.height {
+        while rand::random::<bool>() {
             n += 1;
         }
-        n
+        n + 1
     }
+
+    // FIXME: WIll constantly owerride tails earasing previous values
+    fn update_tails(&mut self, length: usize, new_node: Node) {
+        for index in 0..length {
+            if let Some(previous) = self.tails[index].take() {
+                let previous_next = &mut previous.borrow_mut().next();
+                previous_next[index] = Some(new_node.clone());
+            }
+            self.tails[index] = Some(new_node.clone());
+        }
+    }
+
 
     pub fn insert(&mut self, value: String, offset: u64) {
-        let level = 1 + if self.head.is_none() {
-            self.height
-        } else {
-            self.get_level()
-        }
+        let level = self.get_level();
+        let new_node = Node { value: value, next: vec![None; level], offset: offset };
 
-        let new = Node { value: value, next: vec![None; level], offset: offset };
-
-        for i in 0..level {
-            if let Some(old) = self.tails[i].take() {
-                let next = &mut old.borrow_mut().next();
-                next[i] = Some(new.clone());
-            }
-            self.tails[i] = Some(new.clone());
-        }
+        self.update_tails(level, new_node);
 
         if self.head.is_none() {
-            self.head = Some(new.clone());
+            self.head = Some(new_node.clone());
         }
-
         self.length += 1;
     }
-    // remove
 
     pub fn find(&self, offset: u64) -> Option<String> {
         match self.head {
