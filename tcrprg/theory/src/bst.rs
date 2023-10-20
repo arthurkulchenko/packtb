@@ -55,6 +55,17 @@ impl BinarySearchTree {
     }
 
     pub fn find(&self, node: &TreeNode, numerical_id: u64) -> Option<IoTDevice> {
-        None
+        match node {
+            Some(n) => {
+                if n.device.numerical_id == numerical_id {
+                    Some(n.device.clone())
+                } else if n.device.numerical_id < numerical_id {
+                    self.find(&n.left, numerical_id)
+                } else {
+                    self.find(&n.right, numerical_id)
+                }
+            },
+            _ => None,
+        }
     }
 }
