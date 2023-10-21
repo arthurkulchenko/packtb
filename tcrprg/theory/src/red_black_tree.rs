@@ -129,6 +129,29 @@ impl Node {
             }
         }
     }
+
+    fn find(&self, numerical_id: u64) -> Option<IoTDevice> {
+        // CHECK IoTDevice signature
+        let device = &IoTDevice { numerical_id: numerical_id, address: "".to_string() };
+        self.find_r(&self.root, dievce)
+    }
+
+    fn find_r(&self, node: &Tree, device: &IoTDevice) -> Option<IoTDevice> {
+        match node {
+            Some(n) => {
+                let n = n.borrow();
+                if n.device.numerical_id == device.numerical_id {
+                    Some(n.device.clone())
+                } else {
+                    match self.check(&n.device, &device) {
+                        RBOperation::LeftNode => self.find_r(&n.left, device),
+                        RBOperation::RightNode => self.find_r(&n.right, device),
+                    }
+                }
+            },
+            _ => None,
+        }
+    }
 }
 
 pub fn is_valid_red_black_tree(&self) -> bool {
