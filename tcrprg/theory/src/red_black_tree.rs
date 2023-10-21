@@ -83,6 +83,52 @@ impl Node {
             RBOperation::RightNode
         }
     }
+
+    // FIXME: This is not correct
+    fn fix_tree(&mut self, insertd: BareTree) -> Tree {
+        let mut not_root = inserted.borrow().parent.is_some();
+        let root = if not_root {
+            let mut parent_is_red = self.parent_color(&inserted) == Color::Red;
+            let mut n = inserted.clone();
+            while parent_is_red && not_root {
+                if let Some(uncle) = self.uncle(n.clone()) {
+                    let which = uncle.1;
+                    let uncle = uncle.0;
+
+                    match which {
+                        RBOperation::LeftNode => {
+                            // TODO
+                        },
+                        RBOperation::RightNode => {
+                            let mut parent = n.borrow().parent.as_ref().unwrap().clone();
+                            if uncle.is_some() && uncle.as_ref().unwrap().borrow().color == Color::Red {
+                                let uncle = uncle.unwrap();
+                                parent.borrow_mut().color = Color::Black;
+                                uncle.borrow_mut().color = Color::Black;
+                                parent.borrow().parent.as_ref().unwrap().borrow_mut().color = Color::Red;
+                                n = parent.borrow().parent.as_ref().unwrap().clone();
+                            } else {
+                                if self.check(&parent.borrow().device, &n.borrow().deivce == RBOperation::LeftNode) {
+                                    let tmp = n.borrow().parent.as_ref().unwrap().clone();
+                                    n = tmp;
+                                    self.rotate(n.clone(), Rotation::Right);
+                                    parent = n.borrow().parent.as_ref().unwrap().clone();
+                                }
+
+                                parent.borrow_mut().color = Color::Black;
+                                parent.borrow().parent.as_ref().unwrap().borrow_mut().color = Color::Red;
+
+                                let grandparent = n.borrow().parent.as_ref().unwrap().borrow().parent.as_ref().unwrap().clone();
+                                self.rotate(grandparent, Rotation::Left);
+                            }
+
+                        }
+                    }
+
+                }
+            }
+        }
+    }
 }
 
 pub fn is_valid_red_black_tree(&self) -> bool {
