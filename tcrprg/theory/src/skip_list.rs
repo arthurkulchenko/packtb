@@ -1,4 +1,5 @@
 // Garbage implementation of skip lists
+// TODO: Implement a proper skip list
 
 use std::cell::RefCell;
 use std::rc::Rc;
