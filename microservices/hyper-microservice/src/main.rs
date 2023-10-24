@@ -15,6 +15,16 @@ use tokio::net::TcpListener;
 
 use slab::Slab;
 
+use regex::Regex;
+use lazy_static::lazy_static;
+
+lazy_static! {
+    static ref INDEX_PATH: Regex = Regex::new("^/(index\\.html?)?$").unwrap();
+    static ref USERS_PATH: Regex = Regex::new("^/users/(\\d+)$").unwrap();
+    // static ref USERS_PATH: Regex = Regex::new("^/users/?$").unwrap()
+    static ref USER_PATH: Regex = Regex::new("^/users/((?P<user_id>\\d+?)/?)?$").unwrap();
+}
+
 type UserId = u64;
 struct UserData;
 type UserDb = Arc<Mutex<Slab<UserData>>>;
@@ -51,9 +61,14 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
 
 async fn routes(request: Request<hyper::body::Incoming>, user_db: UserDb) -> Result<Response<Full<Bytes>>, Infallible> {
     match (request.method(), request.uri().path()) {
-        // Routes
         (&Method::GET, "/hello_page") => Ok(Response::new(Full::new(Bytes::from(templates::HELLO_PAGE)))),
         (&Method::GET, "/") => Ok(Response::new(Full::new(Bytes::from(templates::ROOT)))),
+        // (method, path) if path.starts_with(USER_PATH) => {
+        (method, path) if USER_PATH.is_match(path) => {
+            let user_id_caps = USER_PATH.captures(path);
+            let user_id = user_id_caps.unwrap().name("user_id").unwrap().as_str();
+            Ok(Response::new(Full::new(Bytes::from(templates::USER_PAGE.replace("user_id", user_id)))))
+        },
         _ => {
             let response = Response::new("NOT FOUND".into());
             let (mut parts, body) = response.into_parts();
