@@ -5,17 +5,11 @@ use std::sync::Mutex;
 use std::convert::Infallible;
 use std::net::SocketAddr;
 
-use http_body_util::Full;
 use hyper::body::Bytes;
-use hyper::server::conn::http1;
-use hyper::service::service_fn;
-use hyper::{Request, Response, Method, StatusCode};
-use hyper_util::rt::TokioIo;
-// use hyper::body::Body;
-use tokio::net::TcpListener;
+use hyper::{Body, Request, Response, Server, Method, StatusCode};
+use hyper::service::{make_service_fn, service_fn};
 
 use slab::Slab;
-
 use regex::Regex;
 use lazy_static::lazy_static;
 
@@ -31,67 +25,43 @@ struct UserData;
 type UserDb = Arc<Mutex<Slab<UserData>>>;
 
 #[tokio::main]
-async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+async fn main() {
     let addr = SocketAddr::from(([127, 0, 0, 1], 3000));
-    // We create a TcpListener and bind it to 127.0.0.1:3000
-    let listener = TcpListener::bind(addr).await?;
     let user_db = Arc::new(Mutex::new(Slab::new()));
-    // We start a loop to continuously accept incoming connections
-    loop {
-        let (stream, _) = listener.accept().await?;
-        // Use an adapter to access something implementing `tokio::io` traits as if they implement
-        // `hyper::rt` IO traits.
-        let io = TokioIo::new(stream);
-        // Spawn a tokio task to serve multiple connections concurrently
-        // Finally, we bind the incoming connection to our `handler` service
-        // `service_fn` converts our function in a `Service`
+    let make_svc = make_service_fn(|_conn| {
         let user_db = user_db.clone();
-        tokio::task::spawn(async move {
-            if let Err(err) = http1::Builder::new().serve_connection(
-                io,
-                service_fn(move |request| {
-                    let user_db = user_db.clone();
-                    routes(request, user_db)
-                }),
-            ).await {
-                eprintln!("Error serving connection: {:?}", err);
-            }
-        });
+        async {
+            Ok::<_, Infallible>(service_fn(move |request| {
+                let user_db = user_db.clone();
+                routes(request, user_db)
+            }))
+        }
+    });
+    let server = Server::bind(&addr).serve(make_svc);
+    if let Err(e) = server.await {
+        eprintln!("server error: {}", e);
     }
 }
 
-// fn response_with_code(status: StatusCode, body: &str) -> Response<Body<Data = Type, Error = Type>> {
-// fn response_with_code(status: StatusCode, body: &str) -> Response<dyn Body> {
-// fn response_with_code(status: StatusCode, body: &str) -> Response<Full<Bytes>> {
-    // Response::builder().status(status).body(Body::empty()).unwrap()
-    // ====================================================
-    // let response = Response::default();
-    // if body.len() > 0 {
-    //     response.body_mut().push_str(body);
-    // }
-    // let (mut parts, body) = response.into_parts();
-    // parts.status = status;
-    // Response::from_parts(parts, body);
-    // Response::new(Full::new(Bytes::from(body)))
-// }
-
-fn response_with_code(status: StatusCode) -> Response<Full<Bytes> > {
-    Response::builder().status(status).body(Full::new(Bytes::from(""))).unwrap()
+fn empty_response_with_code(status: StatusCode) -> Response<()> {
+    Response::builder().status(status).body(()).unwrap()
 }
 
-// let response = Response::default();
-//             let (mut parts, body) = response.into_parts();
-//             parts.status = StatusCode::NOT_FOUND;
-//             Ok(Response::from_parts(parts, body))
-// }
+fn response(status: StatusCode, body: &str) -> Response<Body> {
+    if body.len() > 0 {
+        let body = Body::from(Bytes::from(body.to_string()));
+        Response::builder().status(status).body(body).unwrap()
+    } else {
+        Response::builder().status(status).body(Body::from(Bytes::new())).unwrap()
+    }
+}
 
-async fn routes(request: Request<hyper::body::Incoming>, user_db: UserDb) -> Result<Response<Full<Bytes>>, Infallible> {
+async fn routes(request: Request<Body>, user_db: UserDb) -> Result<Response<Body>, Infallible> {
     match (request.method(), request.uri().path()) {
-        (&Method::GET, "/hello_page") => Ok(Response::new(Full::new(Bytes::from(templates::HELLO_PAGE)))),
-        (&Method::GET, "/") => Ok(Response::new(Full::new(Bytes::from(templates::ROOT)))),
+        (&Method::GET, "/hello_page") => Ok(response(StatusCode::OK, templates::HELLO_PAGE)),
+        (&Method::GET, "/") => Ok(response(StatusCode::OK, templates::ROOT)),
         // (method, path) if path.starts_with(USER_PATH) => {
         (method, path) if USER_PATH.is_match(path) => {
-            // User specific handlers
             let user_id_caps = USER_PATH.captures(path);
             // let user_id = user_id_caps.unwrap().name("user_id").unwrap().as_str();
             let optional_user_id = user_id_caps.unwrap().name("user_id");
@@ -99,13 +69,13 @@ async fn routes(request: Request<hyper::body::Incoming>, user_db: UserDb) -> Res
             let mut users = user_db.lock().unwrap();
             match (method, optional_user_id) {
                 (&Method::POST, None) => {
-                    let id = users.insert(UserData);
-                    // let response = Response::default();
-                    response_with_code(StatusCode::OK)
+                    let _id = users.insert(UserData);
+                    empty_response_with_code(StatusCode::OK)
                 }
-                _ => response_with_code(StatusCode::METHOD_NOT_ALLOWED),
+                _ => empty_response_with_code(StatusCode::METHOD_NOT_ALLOWED),
             };
-            Ok(Response::new(Full::new(Bytes::from(templates::USER_PAGE.replace("user_id", optional_user_id.unwrap().as_str())))))
+            let resp = response(StatusCode::OK, &templates::USER_PAGE.replace("user_id", optional_user_id.unwrap().as_str()));
+            Ok(resp)
         },
         _ => {
             // Ok(response_with_code(StatusCode::NOT_FOUND, ""));
