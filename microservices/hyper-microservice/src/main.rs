@@ -2,6 +2,8 @@ mod templates;
 
 // use std::fmt::{Display, Formatter};
 // use std::fmt;
+use dotenv::dotenv;
+use std::env;
 use std::sync::Arc;
 use std::sync::Mutex;
 use std::convert::Infallible;
@@ -38,8 +40,10 @@ type UserDb = Arc<Mutex<Slab<UserData>>>;
 
 #[tokio::main]
 async fn main() {
+    dotenv().ok();
     pretty_env_logger::init();
-    let addr = SocketAddr::from(([127, 0, 0, 1], 3000));
+    // let addr = SocketAddr::from(([127, 0, 0, 1], 3000));
+    let addr = env::var("ADDRESS").unwrap_or_else(|_| SocketAddr::from(([127, 0, 0, 1], 3000)).to_string()).parse().expect("Can't get ADDRESS");
     info!("Starting on http://{}", addr);
     let user_db = Arc::new(Mutex::new(Slab::new()));
     let make_svc = make_service_fn(|_conn| {
