@@ -37,3 +37,16 @@ pub const USER_PAGE: &'static str = r#"
     </body>
 </html>
 "#;
+
+pub const USER_DELETED_PAGE: &'static str = r#"
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title>Hyper</title>
+    </head>
+    <body>
+        <h3>User Id: user_id deleted</h3>
+    </body>
+</html>
+"#;

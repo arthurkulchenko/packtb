@@ -1,5 +1,7 @@
 mod templates;
 
+// use std::fmt::{Display, Formatter};
+// use std::fmt;
 use std::sync::Arc;
 use std::sync::Mutex;
 use std::convert::Infallible;
@@ -23,6 +25,13 @@ lazy_static! {
 }
 
 type UserId = u64;
+
+// impl Display for UserId {
+//     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+//         write!(f, "{}", self)
+//     }
+// }
+
 #[derive(Debug)]
 struct UserData;
 type UserDb = Arc<Mutex<Slab<UserData>>>;
@@ -65,23 +74,53 @@ async fn routes(request: Request<Body>, user_db: UserDb) -> Result<Response<Body
             info!("User path");
             let optional_user_id = USER_PATH.captures(path);
             match (method, optional_user_id) {
+                (&Method::GET, params) => {
+                    let users = user_db.lock().unwrap();
+
+                    match params {
+                        Some(params_id) => {
+                            let current_user_id = params_id.name("user_id").unwrap().as_str().parse::<usize>().unwrap();
+                            if let Some(current_user) = users.get(current_user_id) {
+                                let display_user = format!("Dedug User: {:?}", current_user);
+                                Ok(response(StatusCode::OK, &templates::USER_PAGE.replace("user_id", &display_user)))
+                            } else {
+                                Ok(response(StatusCode::NOT_FOUND, ""))
+                            }
+                        },
+                        None => {
+                            let all_users = users.iter().map(|(id, _)| id.to_string()).collect::<Vec<String>>().join(", ");
+                            Ok(response(StatusCode::OK, &templates::USER_PAGE.replace("user_id", &all_users)))
+                        }
+                    }
+                }
                 (&Method::POST, None) => {
                     let mut users = user_db.lock().unwrap();
                     let id = users.insert(UserData) as UserId;
                     drop(users);
                     Ok(response(StatusCode::OK, &templates::USER_PAGE.replace("user_id", &format!("{}", id))))
-                    // Ok(response(StatusCode::OK, "METHOD_NOT_ALLOWED"))
                 }
-                (&Method::GET, Some(params_id)) => {
+                (&Method::POST, Some(_)) => Ok(response(StatusCode::BAD_REQUEST, "")),
+                (&Method::PUT, Some(params_id)) | (&Method::PATCH, Some(params_id)) => {
                     let current_user_id = params_id.name("user_id").unwrap().as_str().parse::<usize>().unwrap();
                     let users = user_db.lock().unwrap();
-                    if users.contains(current_user_id) {
-                        let current_user = &users[current_user_id];
+                    if let Some(current_user) = users.get(current_user_id) {
                         let display_user = format!("Dedug User: {:?}", current_user);
                         return Ok(response(StatusCode::OK, &templates::USER_PAGE.replace("user_id", &display_user)))
+                    } else {
+                        Ok(response(StatusCode::NOT_FOUND, ""))
                     }
-                    Ok(response(StatusCode::OK, &templates::USER_PAGE.replace("user_id", "No user")))
-                }
+                },
+                (&Method::DELETE, Some(params_id)) => {
+                    let current_user_id = params_id.name("user_id").unwrap().as_str().parse::<usize>().unwrap();
+                    let mut users = user_db.lock().unwrap();
+                    if let Some(current_user) = users.get(current_user_id) {
+                        let display_user = format!("Dedug User: {:?}", current_user);
+                        users.remove(current_user_id);
+                        return Ok(response(StatusCode::OK, &templates::USER_DELETED_PAGE.replace("user_id", &display_user)))
+                    } else {
+                        Ok(response(StatusCode::NOT_FOUND, ""))
+                    }
+                },
                 _ => Ok(response(StatusCode::METHOD_NOT_ALLOWED, "")),
             }
         },
