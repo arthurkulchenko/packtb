@@ -1,5 +1,5 @@
 [package]
-name = "hyper-microservuce"
+name = "hyper-microservice"
 version = "0.1.0"
 edition = "2021"
 
@@ -13,3 +13,4 @@ hyper-util = { git = "https://github.com/hyperium/hyper-util.git" }
 slab = "0.4.2"
 lazy_static = "1.4.0"
 regex = "1.5.4"
+log = "0.4"
