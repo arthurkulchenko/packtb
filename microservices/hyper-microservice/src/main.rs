@@ -43,10 +43,6 @@ async fn main() {
     }
 }
 
-fn empty_response_with_code(status: StatusCode) -> Response<()> {
-    Response::builder().status(status).body(()).unwrap()
-}
-
 fn response(status: StatusCode, body: &str) -> Response<Body> {
     if body.len() > 0 {
         let body = Body::from(Bytes::from(body.to_string()));
@@ -69,20 +65,13 @@ async fn routes(request: Request<Body>, user_db: UserDb) -> Result<Response<Body
             let mut users = user_db.lock().unwrap();
             match (method, optional_user_id) {
                 (&Method::POST, None) => {
-                    let _id = users.insert(UserData);
-                    empty_response_with_code(StatusCode::OK)
+                    let _id = users.insert(UserData) as UserId;
+                    response(StatusCode::OK, "")
                 }
-                _ => empty_response_with_code(StatusCode::METHOD_NOT_ALLOWED),
+                _ => response(StatusCode::METHOD_NOT_ALLOWED, ""),
             };
-            let resp = response(StatusCode::OK, &templates::USER_PAGE.replace("user_id", optional_user_id.unwrap().as_str()));
-            Ok(resp)
+            Ok(response(StatusCode::OK, &templates::USER_PAGE.replace("user_id", optional_user_id.unwrap().as_str())))
         },
-        _ => {
-            // Ok(response_with_code(StatusCode::NOT_FOUND, ""));
-            let response = Response::default();
-            let (mut parts, body) = response.into_parts();
-            parts.status = StatusCode::NOT_FOUND;
-            Ok(Response::from_parts(parts, body))
-        }
+        _ => Ok(response(StatusCode::NOT_FOUND, ""))
     }
 }
