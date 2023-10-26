@@ -2,6 +2,8 @@ mod templates;
 
 // use std::fmt::{Display, Formatter};
 // use std::fmt;
+use dotenv::dotenv;
+use std::env;
 use std::sync::Arc;
 use std::sync::Mutex;
 use std::convert::Infallible;
@@ -38,7 +40,11 @@ type UserDb = Arc<Mutex<Slab<UserData>>>;
 
 #[tokio::main]
 async fn main() {
-    let addr = SocketAddr::from(([127, 0, 0, 1], 3000));
+    dotenv().ok();
+    pretty_env_logger::init();
+    // let addr = SocketAddr::from(([127, 0, 0, 1], 3000));
+    let addr = env::var("ADDRESS").unwrap_or_else(|_| SocketAddr::from(([127, 0, 0, 1], 3000)).to_string()).parse().expect("Can't get ADDRESS");
+    info!("Starting on http://{}", addr);
     let user_db = Arc::new(Mutex::new(Slab::new()));
     let make_svc = make_service_fn(|_conn| {
         let user_db = user_db.clone();
@@ -56,6 +62,7 @@ async fn main() {
 }
 
 fn response(status: StatusCode, body: &str) -> Response<Body> {
+    info!("request: {:?}", status);
     if body.len() > 0 {
         let body = Body::from(Bytes::from(body.to_string()));
         Response::builder().status(status).body(body).unwrap()
@@ -65,31 +72,27 @@ fn response(status: StatusCode, body: &str) -> Response<Body> {
 }
 
 async fn routes(request: Request<Body>, user_db: UserDb) -> Result<Response<Body>, Infallible> {
-    info!("request: {:?}", request);
-    match (request.method(), request.uri().path()) {
-        (&Method::GET, "/hello_page") => Ok(response(StatusCode::OK, templates::HELLO_PAGE)),
-        (&Method::GET, "/") => Ok(response(StatusCode::OK, templates::ROOT)),
-        // (method, path) if path.starts_with(USER_PATH) => {
+    let resp = match (request.method(), request.uri().path()) {
+        (&Method::GET, "/hello_page") => response(StatusCode::OK, templates::HELLO_PAGE),
+        (&Method::GET, "/") => response(StatusCode::OK, templates::ROOT),
         (method, path) if (USER_PATH.is_match(path) || USERS_PATH.is_match(path)) => {
-            info!("User path");
             let optional_user_id = USER_PATH.captures(path);
             match (method, optional_user_id) {
                 (&Method::GET, params) => {
                     let users = user_db.lock().unwrap();
-
                     match params {
                         Some(params_id) => {
                             let current_user_id = params_id.name("user_id").unwrap().as_str().parse::<usize>().unwrap();
                             if let Some(current_user) = users.get(current_user_id) {
                                 let display_user = format!("Dedug User: {:?}", current_user);
-                                Ok(response(StatusCode::OK, &templates::USER_PAGE.replace("user_id", &display_user)))
+                                response(StatusCode::OK, &templates::USER_PAGE.replace("user_id", &display_user))
                             } else {
-                                Ok(response(StatusCode::NOT_FOUND, ""))
+                                response(StatusCode::NOT_FOUND, "")
                             }
                         },
                         None => {
                             let all_users = users.iter().map(|(id, _)| id.to_string()).collect::<Vec<String>>().join(", ");
-                            Ok(response(StatusCode::OK, &templates::USER_PAGE.replace("user_id", &all_users)))
+                            response(StatusCode::OK, &templates::USER_PAGE.replace("user_id", &all_users))
                         }
                     }
                 }
@@ -97,9 +100,9 @@ async fn routes(request: Request<Body>, user_db: UserDb) -> Result<Response<Body
                     let mut users = user_db.lock().unwrap();
                     let id = users.insert(UserData) as UserId;
                     drop(users);
-                    Ok(response(StatusCode::OK, &templates::USER_PAGE.replace("user_id", &format!("{}", id))))
+                    response(StatusCode::OK, &templates::USER_PAGE.replace("user_id", &format!("{}", id)))
                 }
-                (&Method::POST, Some(_)) => Ok(response(StatusCode::BAD_REQUEST, "")),
+                (&Method::POST, Some(_)) => response(StatusCode::BAD_REQUEST, ""),
                 (&Method::PUT, Some(params_id)) | (&Method::PATCH, Some(params_id)) => {
                     let current_user_id = params_id.name("user_id").unwrap().as_str().parse::<usize>().unwrap();
                     let users = user_db.lock().unwrap();
@@ -107,7 +110,7 @@ async fn routes(request: Request<Body>, user_db: UserDb) -> Result<Response<Body
                         let display_user = format!("Dedug User: {:?}", current_user);
                         return Ok(response(StatusCode::OK, &templates::USER_PAGE.replace("user_id", &display_user)))
                     } else {
-                        Ok(response(StatusCode::NOT_FOUND, ""))
+                        response(StatusCode::NOT_FOUND, "")
                     }
                 },
                 (&Method::DELETE, Some(params_id)) => {
@@ -118,12 +121,13 @@ async fn routes(request: Request<Body>, user_db: UserDb) -> Result<Response<Body
                         users.remove(current_user_id);
                         return Ok(response(StatusCode::OK, &templates::USER_DELETED_PAGE.replace("user_id", &display_user)))
                     } else {
-                        Ok(response(StatusCode::NOT_FOUND, ""))
+                        response(StatusCode::NOT_FOUND, "")
                     }
                 },
-                _ => Ok(response(StatusCode::METHOD_NOT_ALLOWED, "")),
+                _ => response(StatusCode::METHOD_NOT_ALLOWED, ""),
             }
         },
-        _ => Ok(response(StatusCode::NOT_FOUND, ""))
-    }
+        _ => response(StatusCode::NOT_FOUND, "")
+    };
+    Ok(resp)
 }
