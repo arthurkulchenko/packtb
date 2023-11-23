@@ -1,11 +1,13 @@
 use std::fmt;
 use std::mem;
+use proc_macro_lib;
 
-#[derive(Debug)]
+#[derive(Debug, HelloWorld)]
 struct Person<'a> {
     name: &'a str,
     age: u8
 }
+
 impl fmt::Display for Person<'_> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         // Use `self.number` to refer to each positional data point.
@@ -14,6 +16,14 @@ impl fmt::Display for Person<'_> {
 }
 
 struct Pair(i32, f32);
+
+const OUTPUT: &str = "";
+
+#[function_to_string]
+fn funciton_to_be_filled_by_ai() {
+    // function_to_string Macro will take this function for llm to fill it with a contents
+    println!("{}", OUTPUT);
+}
 
 enum WebEvent {
     // An `enum` variant may either be `unit-like`,
@@ -112,6 +122,8 @@ fn main() {
     println!("{1:?} {0:?} is the {actor:?} name.", "Slater", "Christian", actor="Person's");
 
     let person = Person { name: "Peter", age: 23 };
+    person.hello_world();
+
     println!("{:?}", person);
     println!("{:#?}", person);
     println!("{}", person); // implemented fmt::Display for Person
@@ -136,4 +148,5 @@ fn main() {
     mutable_binding += 1;
 
     println!("After mutation: {}", mutable_binding);
+    
 }
