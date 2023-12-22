@@ -40,6 +40,8 @@ impl <T> SpinLock<T> {
     }
 
     pub fn lock(&self) -> Guard<T> {
+        // Errorness
+        // while self.locked.compare_exchange_weak(false, true, Acquire, Release).is_ok() {
         while self.locked.swap(true, Acquire) {
             std::hint::spin_loop();
         }
@@ -55,6 +57,9 @@ impl <T> SpinLock<T> {
 fn main() {
     let x = SpinLock::new(Vec::new());
     thread::scope(|s|{
+        // NOTICE: When we call push on the Guard instance, the push method require to obtain ref or mut ref and conmiler
+        // will check implementation of its deref and derefmut methods if there are some it will use it to obtain ref or mut ref
+        // and there it will find also method chain that leads to actual value. It is kind of hided implementation
         s.spawn(||{ x.lock().push(1); });
         s.spawn(||{
             x.lock().push(2);
