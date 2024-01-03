@@ -16,9 +16,9 @@ impl <T> Channel<T> {
         Self { queue: Mutex::new(VecDeque::new()), is_ready: Condvar::new() }
     }
 
-    fn send(&self, item: T) {
+    fn send(&self, message: T) {
         // NOTICE: Because lock not assigned to a variable lock is droped in the nex line.
-        self.queue.lock().unwrap().push_back(item);
+        self.queue.lock().unwrap().push_back(message);
         self.is_ready.notify_one();
     }
 
