@@ -3,6 +3,14 @@ name = "channels_self_made"
 version = "0.1.0"
 edition = "2021"
 
+[bin]
+name = "unsafe_channels"
+path = "src/unsafe_channels.rs"
+
+[bin]
+name = "runtime_check"
+path = "src/runtime_check.rs"
+
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
