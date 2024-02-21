@@ -3,11 +3,11 @@ name = "channels_self_made"
 version = "0.1.0"
 edition = "2021"
 
-[bin]
+[[bin]]
 name = "unsafe_channels"
 path = "src/unsafe_channels.rs"
 
-[bin]
+[[bin]]
 name = "runtime_check"
 path = "src/runtime_check.rs"
 
