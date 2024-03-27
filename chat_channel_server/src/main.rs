@@ -11,7 +11,7 @@ const MSG_SIZE: usize = 32;
 fn main() {
     // PHASE: 1 setting up server
     // Create server
-    let server  = TcpListener::bind(LOCAL).expect("Listener failed to bind");
+    let server = TcpListener::bind(LOCAL).expect("Listener failed to bind");
     // config server
     server.set_nonblocking(true).expect("Failed to initialize non-blocking");
     // Create variable to store clients
