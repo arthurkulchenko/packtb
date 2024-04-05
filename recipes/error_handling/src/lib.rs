@@ -2,9 +2,9 @@ use serde::{Deserialize, Serialize};
 use serde_json;
 mod error;
 
-pub use error::TransactionError;
+use error::TransactionError;
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct Transaction {
     from: String,
     to: String,
@@ -37,6 +37,15 @@ pub fn get_sender_transaction(transactions: Vec<Transaction>, sender_name: &str)
     // if user_transactions.len() == 0 { return None }
 
     // Some(user_transactions[0].clone())
+}
+
+pub fn fetch_sender_transaction<'a>(transactions: &'a Vec<Transaction>, sender_name: &'a str) -> Option<&'a Transaction> {
+    for transaction in transactions {
+        if transaction.from == sender_name {
+            return Some(transaction);
+        }
+    }
+    None
 }
 
 pub fn get_transactions(file_name: &str) -> Result<Vec<Transaction>, failure::Error> {
