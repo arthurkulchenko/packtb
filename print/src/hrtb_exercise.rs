@@ -24,11 +24,11 @@ fn main() {
     log_message(callback);
 }
 
-// This is where you'll use HRTBs
-// TODO: Specify that F is a function that accepts any type implementing DisplayMessage for any lifetime
-fn log_message<T, F>(callback: F) where T: for<'a> DisplayMessage, F: Fn(T), {
-    // let message = "This is a log message.".to_string(); // Mock message, you might want to replace or extend this
+fn log_message<T, F>(callback: F, message: &T)
+where
+  T: for<'a> DisplayMessage + ?Sized,
+  F: for<'a> Fn(&'a T),
+{
     let message = "This is a log message."; // Mock message, you might want to replace or extend this
-    callback(message);
-    // TODO: Incorporate system time and complete the logging logic
+    callback(&message as &dyn DisplayMessage);
 }
