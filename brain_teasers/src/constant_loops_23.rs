@@ -1,4 +1,4 @@
-const fn fib(n: u128) -> u128 {
+fn fib(n: u128) -> u128 {
   let mut a = 1;
   let mut b = 1;
   for _ in 2..n {
