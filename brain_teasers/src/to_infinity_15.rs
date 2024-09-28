@@ -10,7 +10,7 @@ struct Node {
 }
 
 pub fn call() {
-  let mut head = Some(Rc::new(RefCell::new(Node{elem: 1, next None})));
-  head.as_mut().unwrap().borrow_mut().next = Some(Rc::new(RefCell::new(Node{elem: 2, next head.clone()})));
+  let mut head = Some(Rc::new(RefCell::new(Node{elem: 1, next: None})));
+  head.as_mut().unwrap().borrow_mut().next = Some(Rc::new(RefCell::new(Node{elem: 2, next: head.clone()})));
   println!("{:?}", head)
 }
