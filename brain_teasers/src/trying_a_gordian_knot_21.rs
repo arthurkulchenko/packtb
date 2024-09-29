@@ -5,12 +5,10 @@ struct Parser<'a> {
 }
 
 pub fn call() {
-  let mut document = Parser {
-    body: "Hello".to_string(),
-    subtext: ""
-  };
+  let mut document = Parser { body: "Hello".to_string(), subtext: "" };
   document.subtext = &document.body;
 
-  let b = document;
+  let b = &document;
   println!("{:?}", b);
+  // println!("{:?}", document);
 }

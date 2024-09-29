@@ -1,4 +1,4 @@
-use std::f32::const::PI;
+use std::f32::consts::PI;
 
 pub struct Degrees(pub f32);
 pub struct Radianas(pub f32);

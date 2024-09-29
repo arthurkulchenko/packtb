@@ -9,11 +9,14 @@
 
 // main.rs
 use tokio::join;
-use std::time::Duration;
+// use std::time::Duration;
+// use chrono::Duration;
 
 async fn count_and_wait(n: u64) -> u64 {
   println!("Starting {}", n);
-  std::thread::sleep(Duration::from_mills(n * 100));
+  // std::thread::sleep(Duration::from_mills(n * 100));
+  // std::thread::sleep(Duration::seconds(n));
+  std::thread::sleep(std::time::Duration::from_secs(n));
   println!("Returning {}", n);
   n
 }

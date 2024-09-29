@@ -1,16 +1,18 @@
-const fn fib(n: u128) -> u128 {
+fn fib(n: u128) -> u128 {
   let mut a = 1;
   let mut b = 1;
+
   for _ in 2..n {
     let tmp = a + b;
     a = b;
     b = tmp;
   }
+
   b
 }
 
 pub fn call() {
-  for i in 0..5 {
+  for i in 0..15 {
     println!("Fib {} = {}", i, fib(i))
   }
 }
