@@ -1,4 +1,3 @@
-// TODO: not works
 use std::mem::size_of;
 
 struct VeryImportantMessage {
@@ -7,5 +6,5 @@ struct VeryImportantMessage {
 }
 
 pub fn call() {
-  println!("VeryImportantMessage occupies {} bytes.", size_of::VeryImportantMessage())
+  println!("VeryImportantMessage occupies {} bytes.", size_of::<VeryImportantMessage>())
 }
